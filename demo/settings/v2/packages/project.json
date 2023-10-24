@@ -2,7 +2,8 @@
   "__version__": "1.0.5",
   "script": {
     "useDefineForClassFields": false,
-    "allowDeclareFields": false
+    "allowDeclareFields": false,
+    "importMap": "project://import-map.json"
   },
   "general": {
     "designResolution": {
