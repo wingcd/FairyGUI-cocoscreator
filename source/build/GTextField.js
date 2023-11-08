@@ -400,9 +400,6 @@ export class GTextField extends GObject {
         else if (this._autoSize == AutoSizeType.Height) {
             this._label.overflow = Label.Overflow.RESIZE_HEIGHT;
             uiComp.width = this._width;
-            if (this.singleLine) {
-                this._label.lineHeight = this._fontSize + this._leading;
-            }
         }
         else if (this._autoSize == AutoSizeType.Shrink) {
             this._label.overflow = Label.Overflow.SHRINK;

@@ -1637,15 +1637,6 @@ declare module 'fairygui-cc/UIPackage' {
                 */
             static loadPackage(bundle: AssetManager.Bundle, path: string, onProgress?: (finish: number, total: number, item: AssetManager.RequestItem) => void, onComplete?: (error: any, pkg: UIPackage) => void): void;
             /**
-                * 载入一个包。包的资源从Asset Bundle加载.
-                * @param bundle Asset Bundle 对象.
-                * @param path 资源相对 Asset Bundle 目录的路径.
-                * @param onProgress 加载进度回调.
-                * @param onComplete 载入成功后的回调.
-                * @param delayLoad 延迟加载资源.
-                */
-            static loadPackage(bundle: AssetManager.Bundle, path: string, onProgress?: (finish: number, total: number, item: AssetManager.RequestItem) => void, onComplete?: (error: any, pkg: UIPackage) => void, delayLoad?: boolean): void;
-            /**
                 * 载入一个包。包的资源从resources加载.
                 * @param path 资源相对 resources 的路径.
                 * @param onComplete 载入成功后的回调.
