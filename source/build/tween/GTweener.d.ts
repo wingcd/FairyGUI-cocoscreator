@@ -33,6 +33,7 @@ export declare class GTweener {
     private _elapsedTime;
     private _normalizedTime;
     constructor();
+    get elapsedTime(): number;
     setDelay(value: number): GTweener;
     get delay(): number;
     setDuration(value: number): GTweener;

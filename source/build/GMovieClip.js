@@ -122,6 +122,7 @@ export class GMovieClip extends GObject {
         this.setSize(this.sourceWidth, this.sourceHeight);
         contentItem = contentItem.getHighResolution();
         if (!UIConfig.enableDelayLoad || contentItem.__loaded && contentItem.decoded) {
+            contentItem.load();
             this.init(contentItem);
         }
         else {

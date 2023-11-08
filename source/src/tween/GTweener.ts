@@ -52,6 +52,10 @@ export class GTweener {
         this._reset();
     }
 
+    public get elapsedTime() {
+        return this._elapsedTime;
+    }
+
     public setDelay(value: number): GTweener {
         this._delay = value;
         return this;

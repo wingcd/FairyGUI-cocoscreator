@@ -24,6 +24,7 @@ export default class MainMenu extends Component {
 
     onLoad() {
         dynamicAtlasManager.enabled = false;
+        fgui.UIConfig.enableDelayLoad = false;
         fgui.UIConfig.autoReleaseAssets = true;
         fgui.UIPackage.loadPackage("UI/MainMenu", this.onUILoaded.bind(this));
     }

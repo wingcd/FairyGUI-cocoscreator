@@ -916,6 +916,9 @@ class GTweener {
         this._deltaValue = new TweenValue();
         this._reset();
     }
+    get elapsedTime() {
+        return this._elapsedTime;
+    }
     setDelay(value) {
         this._delay = value;
         return this;
@@ -4208,6 +4211,7 @@ class GImage extends GObject {
         else if (contentItem.scaleByTile)
             this._content.type = Sprite.Type.TILED;
         if (!UIConfig.enableDelayLoad || contentItem.__loaded && contentItem.decoded) {
+            contentItem.load();
             this.init(contentItem);
         }
         else {
@@ -4606,6 +4610,7 @@ class GMovieClip extends GObject {
         this.setSize(this.sourceWidth, this.sourceHeight);
         contentItem = contentItem.getHighResolution();
         if (!UIConfig.enableDelayLoad || contentItem.__loaded && contentItem.decoded) {
+            contentItem.load();
             this.init(contentItem);
         }
         else {
@@ -5270,7 +5275,6 @@ class UIPackage {
         let path;
         let onProgress;
         let onComplete;
-        let delayLoad = false;
         let bundle;
         if (args[0] instanceof AssetManager.Bundle) {
             bundle = args[0];
@@ -5278,7 +5282,6 @@ class UIPackage {
             if (args.length > 3) {
                 onProgress = args[2];
                 onComplete = args[3];
-                delayLoad = args[4];
             }
             else
                 onComplete = args[2];
@@ -5297,7 +5300,7 @@ class UIPackage {
             onComplete === null || onComplete === void 0 ? void 0 : onComplete.call(this, null, p);
             return;
         }
-        delayLoad = delayLoad != null ? delayLoad : UIConfig.enableDelayLoad;
+        const delayLoad = UIConfig.enableDelayLoad;
         bundle = bundle || resources;
         bundle.load(path, Asset, onProgress, (err, asset) => {
             if (err) {
@@ -6712,19 +6715,23 @@ class GTextField extends GObject {
         }
     }
     updateOverflow() {
+        const uiComp = this._node._uiProps.uiTransformComp;
         if (this._autoSize == AutoSizeType.Both)
             this._label.overflow = Label.Overflow.NONE;
         else if (this._autoSize == AutoSizeType.Height) {
             this._label.overflow = Label.Overflow.RESIZE_HEIGHT;
-            this._node._uiProps.uiTransformComp.width = this._width;
+            uiComp.width = this._width;
+            if (this.singleLine) {
+                this._label.lineHeight = this._fontSize + this._leading;
+            }
         }
         else if (this._autoSize == AutoSizeType.Shrink) {
             this._label.overflow = Label.Overflow.SHRINK;
-            this._node._uiProps.uiTransformComp.setContentSize(this._width, this._height);
+            uiComp.setContentSize(this._width, this._height);
         }
         else {
             this._label.overflow = Label.Overflow.CLAMP;
-            this._node._uiProps.uiTransformComp.setContentSize(this._width, this._height);
+            uiComp.setContentSize(this._width, this._height);
         }
     }
     markSizeChanged() {
@@ -12762,6 +12769,7 @@ class GLoader extends GObject {
             this.sourceHeight = contentItem.height;
             contentItem = contentItem.getHighResolution();
             if (!UIConfig.enableDelayLoad || contentItem.__loaded && contentItem.decoded) {
+                contentItem.load();
                 this.init(contentItem, itemURL, dirtyVersion);
             }
             else {

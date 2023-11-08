@@ -76,7 +76,6 @@ export class UIPackage {
         let path;
         let onProgress;
         let onComplete;
-        let delayLoad = false;
         let bundle;
         if (args[0] instanceof AssetManager.Bundle) {
             bundle = args[0];
@@ -84,7 +83,6 @@ export class UIPackage {
             if (args.length > 3) {
                 onProgress = args[2];
                 onComplete = args[3];
-                delayLoad = args[4];
             }
             else
                 onComplete = args[2];
@@ -103,7 +101,7 @@ export class UIPackage {
             onComplete === null || onComplete === void 0 ? void 0 : onComplete.call(this, null, p);
             return;
         }
-        delayLoad = delayLoad != null ? delayLoad : UIConfig.enableDelayLoad;
+        const delayLoad = UIConfig.enableDelayLoad;
         bundle = bundle || resources;
         bundle.load(path, Asset, onProgress, (err, asset) => {
             if (err) {

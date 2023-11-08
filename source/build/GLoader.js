@@ -257,6 +257,7 @@ export class GLoader extends GObject {
             this.sourceHeight = contentItem.height;
             contentItem = contentItem.getHighResolution();
             if (!UIConfig.enableDelayLoad || contentItem.__loaded && contentItem.decoded) {
+                contentItem.load();
                 this.init(contentItem, itemURL, dirtyVersion);
             }
             else {

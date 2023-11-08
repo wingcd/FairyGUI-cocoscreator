@@ -97,6 +97,7 @@ export class GImage extends GObject {
             this._content.type = Sprite.Type.TILED;
             
         if(!UIConfig.enableDelayLoad || contentItem.__loaded && contentItem.decoded) {
+            contentItem.load();
             this.init(contentItem);
         }else{
             contentItem.loadAsync().then(()=>{

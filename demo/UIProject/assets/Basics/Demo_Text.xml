@@ -25,5 +25,6 @@
       <Button title="Get Input"/>
     </component>
     <text id="n26_rqas" name="n26" xy="476,107" size="172,32" fontSize="22" color="#ffffff" align="center" vAlign="middle" shadowColor="#000000" shadowOffset="3,3" text="Text with shadow"/>
+    <text id="n27_7kgc" name="n27" xy="817,64" size="139,32" fontSize="22" leading="-10" autoSize="height" singleLine="true" text="单列设置行距"/>
   </displayList>
 </component>

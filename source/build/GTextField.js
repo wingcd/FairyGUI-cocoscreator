@@ -394,19 +394,23 @@ export class GTextField extends GObject {
         }
     }
     updateOverflow() {
+        const uiComp = this._node._uiProps.uiTransformComp;
         if (this._autoSize == AutoSizeType.Both)
             this._label.overflow = Label.Overflow.NONE;
         else if (this._autoSize == AutoSizeType.Height) {
             this._label.overflow = Label.Overflow.RESIZE_HEIGHT;
-            this._node._uiProps.uiTransformComp.width = this._width;
+            uiComp.width = this._width;
+            if (this.singleLine) {
+                this._label.lineHeight = this._fontSize + this._leading;
+            }
         }
         else if (this._autoSize == AutoSizeType.Shrink) {
             this._label.overflow = Label.Overflow.SHRINK;
-            this._node._uiProps.uiTransformComp.setContentSize(this._width, this._height);
+            uiComp.setContentSize(this._width, this._height);
         }
         else {
             this._label.overflow = Label.Overflow.CLAMP;
-            this._node._uiProps.uiTransformComp.setContentSize(this._width, this._height);
+            uiComp.setContentSize(this._width, this._height);
         }
     }
     markSizeChanged() {

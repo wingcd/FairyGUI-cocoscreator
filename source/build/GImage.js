@@ -71,6 +71,7 @@ export class GImage extends GObject {
         else if (contentItem.scaleByTile)
             this._content.type = Sprite.Type.TILED;
         if (!UIConfig.enableDelayLoad || contentItem.__loaded && contentItem.decoded) {
+            contentItem.load();
             this.init(contentItem);
         }
         else {

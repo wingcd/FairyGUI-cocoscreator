@@ -21,6 +21,9 @@ export class GTweener {
         this._deltaValue = new TweenValue();
         this._reset();
     }
+    get elapsedTime() {
+        return this._elapsedTime;
+    }
     setDelay(value) {
         this._delay = value;
         return this;

@@ -2140,6 +2140,7 @@ declare module 'fairygui-cc/tween/GTweener' {
         _killed: boolean;
         _paused: boolean;
         constructor();
+        get elapsedTime(): number;
         setDelay(value: number): GTweener;
         get delay(): number;
         setDuration(value: number): GTweener;
