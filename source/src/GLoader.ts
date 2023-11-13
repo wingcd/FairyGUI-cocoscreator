@@ -292,7 +292,7 @@ export class GLoader extends GObject {
                 this._content.__update();
                 this.updateLayout();
             }
-        }
+        } 
         else if (this._contentItem.type == PackageItemType.MovieClip) {
             this._content.interval = this._contentItem.interval;
             this._content.swing = this._contentItem.swing;
@@ -313,7 +313,7 @@ export class GLoader extends GObject {
                 this._container.addChild(this._content2.node);
                 this.updateLayout();
             }
-        }
+        } 
         else
             this.setErrorState();
     }
@@ -329,7 +329,9 @@ export class GLoader extends GObject {
             this.sourceHeight = contentItem.height;
             contentItem = contentItem.getHighResolution();
 
-            if(!UIConfig.enableDelayLoad || contentItem.__loaded && contentItem.decoded) {
+            if(!UIConfig.enableDelayLoad || 
+                contentItem.__loaded && contentItem.decoded || 
+                contentItem.type == PackageItemType.Component) {
                 contentItem.load();
                 this.init(contentItem, itemURL, dirtyVersion);
             }else{
