@@ -95,6 +95,10 @@ export default class BasicDemo extends Component {
             case "ProgressBar":
                 this.playProgressBar();
                 break;
+
+            case "MovieClip":
+                this.playMovieClip();
+                break;
         }
     }
 
@@ -325,5 +329,16 @@ export default class BasicDemo extends Component {
                     child.value = 0;
             }
         }
+    }
+
+    
+    //---------------------------------------------
+    private playMovieClip() {
+        var obj: fgui.GComponent = this._demoObjects["MovieClip"];
+        var btn = obj.getChild("n18");
+        var c1 = obj.getController("c1");
+        btn.onClick(()=>{
+            c1.selectedIndex = (c1.selectedIndex + 1) % c1.pageCount;
+        }, this);
     }
 }
