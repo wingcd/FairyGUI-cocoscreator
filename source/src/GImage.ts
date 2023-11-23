@@ -9,6 +9,7 @@ import { UIConfig } from "./UIConfig";
 export class GImage extends GObject {
     public _content: Image;
     private _contentPackageItem?: PackageItem;
+    onReady: Function;
 
     public constructor() {
         super();
@@ -79,6 +80,11 @@ export class GImage extends GObject {
     
         this._contentPackageItem = contentItem;
         this._contentPackageItem.addRef();
+
+        if(this.onReady) {
+            this.onReady();
+            this.onReady = null;
+        }
     }
 
     public constructFromResource(): void {

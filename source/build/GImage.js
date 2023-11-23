@@ -57,6 +57,10 @@ export class GImage extends GObject {
         this._content.__update();
         this._contentPackageItem = contentItem;
         this._contentPackageItem.addRef();
+        if (this.onReady) {
+            this.onReady();
+            this.onReady = null;
+        }
     }
     constructFromResource() {
         var contentItem = this.packageItem.getBranch();

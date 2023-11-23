@@ -81,6 +81,7 @@ export declare class GComponent extends GObject {
     get mask(): GObject;
     set mask(value: GObject);
     setMask(value: GObject, inverted: boolean): void;
+    private onMaskContentReady;
     private onMaskReady;
     private onMaskContentChanged;
     get _pivotCorrectX(): number;

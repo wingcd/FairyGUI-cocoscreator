@@ -338,6 +338,7 @@ declare module 'fairygui-cc/GImage' {
     import { ByteBuffer } from "fairygui-cc/utils/ByteBuffer";
     export class GImage extends GObject {
         _content: Image;
+        onReady: Function;
         constructor();
         get color(): Color;
         set color(value: Color);

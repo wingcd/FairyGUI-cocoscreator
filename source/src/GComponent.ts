@@ -654,16 +654,12 @@ export class GComponent extends GObject {
             value.node.on(Node.EventType.ANCHOR_CHANGED, this.onMaskContentChanged, this);
 
             this._invertedMask = inverted;
-            if (this._node.activeInHierarchy)
-                this.onMaskReady();
-            else
-                this.on(FUIEvent.DISPLAY, this.onMaskReady, this);
-
-            this.onMaskContentChanged();
-            if (this._scrollPane)
-                this._scrollPane.adjustMaskContainer();
-            else
-                this._container.setPosition(0, 0);
+            
+            if(UIConfig.enableDelayLoad && this._maskContent instanceof GImage && !this._maskContent._content.spriteFrame) {
+                this._maskContent.onReady = this.onMaskContentReady.bind(this);
+            }else{
+                this.onMaskContentReady();
+            }
         }
         else if (this._customMask) {
             if (this._scrollPane)
@@ -678,6 +674,19 @@ export class GComponent extends GObject {
             else
                 this._container.setPosition(this._pivotCorrectX, this._pivotCorrectY);
         }
+    }
+
+    private onMaskContentReady() {
+        if (this._node.activeInHierarchy)
+            this.onMaskReady();
+        else
+            this.on(FUIEvent.DISPLAY, this.onMaskReady, this);
+
+        this.onMaskContentChanged();
+        if (this._scrollPane)
+            this._scrollPane.adjustMaskContainer();
+        else
+            this._container.setPosition(0, 0);
     }
 
     private onMaskReady() {

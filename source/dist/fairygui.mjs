@@ -4197,6 +4197,10 @@ class GImage extends GObject {
         this._content.__update();
         this._contentPackageItem = contentItem;
         this._contentPackageItem.addRef();
+        if (this.onReady) {
+            this.onReady();
+            this.onReady = null;
+        }
     }
     constructFromResource() {
         var contentItem = this.packageItem.getBranch();
@@ -11166,15 +11170,12 @@ class GComponent extends GObject {
             value.node.on(Node.EventType.SIZE_CHANGED, this.onMaskContentChanged, this);
             value.node.on(Node.EventType.ANCHOR_CHANGED, this.onMaskContentChanged, this);
             this._invertedMask = inverted;
-            if (this._node.activeInHierarchy)
-                this.onMaskReady();
-            else
-                this.on(Event.DISPLAY, this.onMaskReady, this);
-            this.onMaskContentChanged();
-            if (this._scrollPane)
-                this._scrollPane.adjustMaskContainer();
-            else
-                this._container.setPosition(0, 0);
+            if (UIConfig.enableDelayLoad && this._maskContent instanceof GImage && !this._maskContent._content.spriteFrame) {
+                this._maskContent.onReady = this.onMaskContentReady.bind(this);
+            }
+            else {
+                this.onMaskContentReady();
+            }
         }
         else if (this._customMask) {
             if (this._scrollPane)
@@ -11188,6 +11189,17 @@ class GComponent extends GObject {
             else
                 this._container.setPosition(this._pivotCorrectX, this._pivotCorrectY);
         }
+    }
+    onMaskContentReady() {
+        if (this._node.activeInHierarchy)
+            this.onMaskReady();
+        else
+            this.on(Event.DISPLAY, this.onMaskReady, this);
+        this.onMaskContentChanged();
+        if (this._scrollPane)
+            this._scrollPane.adjustMaskContainer();
+        else
+            this._container.setPosition(0, 0);
     }
     onMaskReady() {
         this.off(Event.DISPLAY, this.onMaskReady, this);

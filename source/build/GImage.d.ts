@@ -6,6 +6,7 @@ import { ByteBuffer } from "./utils/ByteBuffer";
 export declare class GImage extends GObject {
     _content: Image;
     private _contentPackageItem?;
+    onReady: Function;
     constructor();
     get color(): Color;
     set color(value: Color);
