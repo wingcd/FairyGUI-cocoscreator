@@ -5280,10 +5280,16 @@ class UIPackage {
         let onProgress;
         let onComplete;
         let bundle;
+        let delayLoad = UIConfig.enableDelayLoad;
         if (args[0] instanceof AssetManager.Bundle) {
             bundle = args[0];
             path = args[1];
-            if (args.length > 3) {
+            if (args.length > 4) {
+                onProgress = args[2];
+                onComplete = args[3];
+                delayLoad = args[4];
+            }
+            else if (args.length > 3) {
                 onProgress = args[2];
                 onComplete = args[3];
             }
@@ -5292,7 +5298,12 @@ class UIPackage {
         }
         else {
             path = args[0];
-            if (args.length > 2) {
+            if (args.length > 3) {
+                onProgress = args[1];
+                onComplete = args[2];
+                delayLoad = args[3];
+            }
+            else if (args.length > 2) {
                 onProgress = args[1];
                 onComplete = args[2];
             }
@@ -5304,7 +5315,6 @@ class UIPackage {
             onComplete === null || onComplete === void 0 ? void 0 : onComplete.call(this, null, p);
             return;
         }
-        const delayLoad = UIConfig.enableDelayLoad;
         bundle = bundle || resources;
         bundle.load(path, Asset, onProgress, (err, asset) => {
             if (err) {

@@ -114,7 +114,7 @@ export class UIPackage {
      * @param onComplete 载入成功后的回调.
      * @param delayLoad 延迟加载资源.
      */
-    // public static loadPackage(bundle: AssetManager.Bundle, path: string, onProgress?: (finish: number, total: number, item: AssetManager.RequestItem) => void, onComplete?: (error: any, pkg: UIPackage) => void, delayLoad?:boolean): void;
+    public static loadPackage(bundle: AssetManager.Bundle, path: string, onProgress?: (finish: number, total: number, item: AssetManager.RequestItem) => void, onComplete?: (error: any, pkg: UIPackage) => void, delayLoad?:boolean): void;
     /**
      * 载入一个包。包的资源从resources加载.
      * @param path 资源相对 resources 的路径.
@@ -128,15 +128,30 @@ export class UIPackage {
      * @param onComplete 载入成功后的回调.
      */
     public static loadPackage(path: string, onProgress?: (finish: number, total: number, item: AssetManager.RequestItem) => void, onComplete?: (error: Error, pkg: UIPackage) => void): void;
+    /**
+     * 载入一个包。包的资源从resources加载.
+     * @param path 资源相对 resources 的路径.
+     * @param onProgress 加载进度回调.
+     * @param onComplete 载入成功后的回调.
+     * @param delayLoad 延迟加载资源.
+     */
+    public static loadPackage(path: string, onProgress?: (finish: number, total: number, item: AssetManager.RequestItem) => void, onComplete?: (error: Error, pkg: UIPackage) => void, delayLoad?: boolean): void;
     public static loadPackage(...args: any[]) {
         let path: string;
         let onProgress: (finish: number, total: number, item: AssetManager.RequestItem) => void;
         let onComplete: (error: Error, pkg: UIPackage) => void;
         let bundle: AssetManager.Bundle;
+        
+        let delayLoad = UIConfig.enableDelayLoad;
         if (args[0] instanceof AssetManager.Bundle) {
             bundle = args[0];
             path = args[1];
-            if (args.length > 3) {
+            if(args.length > 4) {
+                onProgress = args[2];
+                onComplete = args[3];
+                delayLoad = args[4];
+            }
+            else if (args.length > 3) {
                 onProgress = args[2];
                 onComplete = args[3];
             }
@@ -145,7 +160,12 @@ export class UIPackage {
         }
         else {
             path = args[0];
-            if (args.length > 2) {
+            if(args.length > 3) {
+                onProgress = args[1];
+                onComplete = args[2];
+                delayLoad = args[3];
+            }
+            else if (args.length > 2) {
                 onProgress = args[1];
                 onComplete = args[2];
             }
@@ -160,7 +180,6 @@ export class UIPackage {
             return;
         }
 
-        const delayLoad = UIConfig.enableDelayLoad;
         bundle = bundle || resources;
         bundle.load(path, Asset, onProgress, (err: Error | null, asset: Asset) => {
             if (err) {
