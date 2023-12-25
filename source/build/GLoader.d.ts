@@ -26,6 +26,7 @@ export declare class GLoader extends GObject {
     private _content2?;
     private _updatingLayout;
     private _dirtyVersion;
+    private _externalAssets;
     private static _errorSignPool;
     constructor();
     dispose(): void;
@@ -66,7 +67,8 @@ export declare class GLoader extends GObject {
     private init;
     protected loadFromPackage(itemURL: string): void;
     protected loadExternal(): void;
-    protected freeExternal(texture: SpriteFrame): void;
+    private addExternalAssetRef;
+    protected freeExternal(): void;
     protected onExternalLoadSuccess(texture: SpriteFrame): void;
     protected onExternalLoadFailed(): void;
     private setErrorState;
