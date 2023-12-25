@@ -1899,6 +1899,9 @@
     "lightProbeInfo": {
       "__id__": 144
     },
+    "postSettings": {
+      "__id__": 145
+    },
     "bakedWithStationaryMainLight": false,
     "bakedWithHighpLightmap": false
   },
@@ -2052,5 +2055,9 @@
     "_showConvex": false,
     "_data": null,
     "_lightProbeSphereVolume": 1
+  },
+  {
+    "__type__": "cc.PostSettingsInfo",
+    "_toneMappingType": 0
   }
 ]

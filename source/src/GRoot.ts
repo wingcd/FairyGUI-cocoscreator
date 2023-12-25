@@ -209,7 +209,9 @@ export class GRoot extends GComponent {
         var sizeW: number = 0, sizeH: number = 0;
         if (target) {
             pos = target.localToGlobal();
+            GRoot.inst.globalToLocal(pos.x, pos.y, pos);
             let pos2 = target.localToGlobal(target.width, target.height);
+            GRoot.inst.globalToLocal(pos2.x, pos2.y, pos2);
             sizeW = pos2.x - pos.x;
             sizeH = pos2.y - pos.y;
         }
