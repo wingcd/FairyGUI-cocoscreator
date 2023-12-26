@@ -2548,6 +2548,7 @@ class GObject {
     }
     set name(value) {
         this._name = value;
+        this._node.name = value;
     }
     get x() {
         return this._x;
@@ -3203,7 +3204,7 @@ class GObject {
         var f1;
         var f2;
         this._id = buffer.readS();
-        this._name = buffer.readS();
+        this.name = buffer.readS();
         f1 = buffer.readInt();
         f2 = buffer.readInt();
         this.setPosition(f1, f2);
