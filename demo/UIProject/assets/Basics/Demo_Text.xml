@@ -26,5 +26,6 @@
     </component>
     <text id="n26_rqas" name="n26" xy="476,107" size="172,32" fontSize="22" color="#ffffff" align="center" vAlign="middle" shadowColor="#000000" shadowOffset="3,3" text="Text with shadow"/>
     <text id="n27_7kgc" name="n27" xy="817,64" size="139,32" fontSize="22" leading="-10" autoSize="height" singleLine="true" text="单列设置行距"/>
+    <text id="n28_l9mv" name="n28" xy="346,505" size="345,54" grayed="true" font="ui://9leh0eyfduef6m" fontSize="16" color="#ffffff" leading="12" autoSize="none" text="1234567890"/>
   </displayList>
 </component>

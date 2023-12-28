@@ -1,5 +1,4 @@
-info creator=UIBuilder
-common lineHeight=0
+info size=50 colored=true
 char id=48 img=duef6n xoffset=0 yoffset=0 xadvance=33
 char id=49 img=duef6o xoffset=0 yoffset=0 xadvance=33
 char id=50 img=duef6p xoffset=0 yoffset=0 xadvance=32

@@ -1,4 +1,4 @@
-import { BitmapFont, Color, Font, HorizontalTextAlignment, Label, LabelOutline, LabelShadow, Node, SystemEventType, Vec2, VerticalTextAlignment, isValid } from "cc";
+import { BitmapFont, Color, Font, HorizontalTextAlignment, InstanceMaterialType, Label, LabelOutline, LabelShadow, Node, SystemEventType, Vec2, VerticalTextAlignment, isValid } from "cc";
 import { Event as FUIEvent } from "./event/Event";
 import { AutoSizeType, ObjectPropID } from "./FieldTypes";
 import { GObject } from "./GObject";
@@ -434,6 +434,8 @@ export class GTextField extends GObject {
             else
                 label.font = font;
         }
+
+        this.updateFontColor();
     }
 
     protected assignFontColor(label: any, value: Color): void {
@@ -441,8 +443,23 @@ export class GTextField extends GObject {
         if ((font instanceof BitmapFont) && !(font.fntConfig.canTint))
             value = Color.WHITE;
 
-        if (this._grayed)
-            value = toGrayedColor(value);
+        if(label instanceof Label) {
+            if(font instanceof BitmapFont && this._grayed) {
+                //@ts-ignore
+                label._instanceMaterialType = InstanceMaterialType.GRAYSCALE;
+                //@ts-ignore
+                label.updateMaterial();
+            }else{
+                //@ts-ignore
+                label.changeMaterialForDefine();
+                if (this._grayed) 
+                    value = toGrayedColor(value);
+            }            
+        }else{
+            if (this._grayed) 
+                value = toGrayedColor(value);
+        }
+
         label.color = value;
     }
 
