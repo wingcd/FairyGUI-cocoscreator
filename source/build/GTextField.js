@@ -1,4 +1,4 @@
-import { BitmapFont, Color, Font, Label, LabelOutline, LabelShadow, Node, Vec2, isValid } from "cc";
+import { BitmapFont, Color, Font, InstanceMaterialType, Label, LabelOutline, LabelShadow, Node, Vec2, isValid } from "cc";
 import { Event as FUIEvent } from "./event/Event";
 import { AutoSizeType, ObjectPropID } from "./FieldTypes";
 import { GObject } from "./GObject";
@@ -343,13 +343,30 @@ export class GTextField extends GObject {
             else
                 label.font = font;
         }
+        this.updateFontColor();
     }
     assignFontColor(label, value) {
         let font = label.font;
         if ((font instanceof BitmapFont) && !(font.fntConfig.canTint))
             value = Color.WHITE;
-        if (this._grayed)
-            value = toGrayedColor(value);
+        if (label instanceof Label) {
+            if (font instanceof BitmapFont && this._grayed) {
+                //@ts-ignore
+                label._instanceMaterialType = InstanceMaterialType.GRAYSCALE;
+                //@ts-ignore
+                label.updateMaterial();
+            }
+            else {
+                //@ts-ignore
+                label.changeMaterialForDefine();
+                if (this._grayed)
+                    value = toGrayedColor(value);
+            }
+        }
+        else {
+            if (this._grayed)
+                value = toGrayedColor(value);
+        }
         label.color = value;
     }
     updateFont() {

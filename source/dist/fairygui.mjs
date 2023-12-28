@@ -1,4 +1,4 @@
-import { gfx, UIRenderer, Event as Event$1, Vec2, Node, game, director, macro, Color, Layers, Font, resources, Vec3, Rect, UITransform, UIOpacity, Component, Graphics, misc, Sprite, isValid, Size, screen, view, assetManager, ImageAsset, AudioClip, BufferAsset, AssetManager, Asset, Texture2D, SpriteFrame, BitmapFont, sp, dragonBones, path, Label, LabelOutline, LabelShadow, SpriteAtlas, RichText, sys, EventMouse, EventTarget, Mask, math, View, AudioSourceComponent, EditBox, Overflow } from 'cc';
+import { gfx, UIRenderer, Event as Event$1, Vec2, Node, game, director, macro, Color, Layers, Font, resources, Vec3, Rect, UITransform, UIOpacity, Component, Graphics, misc, Sprite, isValid, Size, screen, view, assetManager, ImageAsset, AudioClip, BufferAsset, AssetManager, Asset, Texture2D, SpriteFrame, BitmapFont, sp, dragonBones, path, Label, LabelOutline, LabelShadow, InstanceMaterialType, SpriteAtlas, RichText, sys, EventMouse, EventTarget, Mask, math, View, AudioSourceComponent, EditBox, Overflow } from 'cc';
 import { EDITOR } from 'cc/env';
 
 var ButtonMode;
@@ -6678,13 +6678,30 @@ class GTextField extends GObject {
             else
                 label.font = font;
         }
+        this.updateFontColor();
     }
     assignFontColor(label, value) {
         let font = label.font;
         if ((font instanceof BitmapFont) && !(font.fntConfig.canTint))
             value = Color.WHITE;
-        if (this._grayed)
-            value = toGrayedColor(value);
+        if (label instanceof Label) {
+            if (font instanceof BitmapFont && this._grayed) {
+                //@ts-ignore
+                label._instanceMaterialType = InstanceMaterialType.GRAYSCALE;
+                //@ts-ignore
+                label.updateMaterial();
+            }
+            else {
+                //@ts-ignore
+                label.changeMaterialForDefine();
+                if (this._grayed)
+                    value = toGrayedColor(value);
+            }
+        }
+        else {
+            if (this._grayed)
+                value = toGrayedColor(value);
+        }
         label.color = value;
     }
     updateFont() {
