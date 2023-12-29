@@ -651,7 +651,7 @@ declare module 'fairygui-cc/GLoader' {
         protected loadContent(): void;
         protected loadFromPackage(itemURL: string): void;
         protected loadExternal(): void;
-        protected freeExternal(texture: SpriteFrame): void;
+        protected freeExternal(): void;
         protected onExternalLoadSuccess(texture: SpriteFrame): void;
         protected onExternalLoadFailed(): void;
         protected handleSizeChanged(): void;

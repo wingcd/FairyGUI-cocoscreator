@@ -109,6 +109,7 @@ export class GObject {
 
     public set name(value: string) {
         this._name = value;
+        this._node.name = value;
     }
 
     public get x(): number {
@@ -923,7 +924,7 @@ export class GObject {
         var f2: number;
 
         this._id = buffer.readS();
-        this._name = buffer.readS();
+        this.name = buffer.readS();
         f1 = buffer.readInt();
         f2 = buffer.readInt();
         this.setPosition(f1, f2);

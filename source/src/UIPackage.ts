@@ -141,7 +141,7 @@ export class UIPackage {
         let onProgress: (finish: number, total: number, item: AssetManager.RequestItem) => void;
         let onComplete: (error: Error, pkg: UIPackage) => void;
         let bundle: AssetManager.Bundle;
-        
+
         let delayLoad = UIConfig.enableDelayLoad;
         if (args[0] instanceof AssetManager.Bundle) {
             bundle = args[0];
@@ -173,7 +173,7 @@ export class UIPackage {
                 onComplete = args[1];
         }
 
-        
+
         let p = _instById[path];
         if(p) {
             onComplete?.call(this, null, p);
@@ -193,7 +193,7 @@ export class UIPackage {
             let buffer: ArrayBuffer = (<any>asset).buffer ? (<any>asset).buffer() : (<any>asset)._nativeAsset;
             pkg.loadPackage(new ByteBuffer(buffer), path);
             assetManager.releaseAsset(asset);
-            
+
             let cnt: number = pkg._items.length;
             let urls: Array<string> = [];
             let types: Array<any> = [];
@@ -693,7 +693,7 @@ export class UIPackage {
                     reject(err);
                     return;
                 }
-                
+
                 resolve(asset);
             });
         });
@@ -711,7 +711,7 @@ export class UIPackage {
                     var sprite: AtlasSprite = this._sprites[item.id];
                     if (sprite) {
                         item.parent = sprite.atlas;
-                        
+
                         let atlasTexture: Texture2D = <Texture2D>await this.getItemAssetAsync2(sprite.atlas);
                         if (atlasTexture) {
                             let sf = new SpriteFrame();
@@ -740,8 +740,8 @@ export class UIPackage {
 
             case PackageItemType.Atlas:
             case PackageItemType.Sound:
-                if (!item.decoded) {    
-                    item.decoded = true;  
+                if (!item.decoded) {
+                    item.decoded = true;
                     item.asset = <Asset>await this.loadAssetAsync(this._bundle, item.file, ItemTypeToAssetType[item.type]);
                     if (!item.asset)
                         console.log("Resource '" + item.file + "' not found");
@@ -757,8 +757,8 @@ export class UIPackage {
                     }
                     else {
                         item.asset = (<AudioClip>item.asset);
-                    }        
-                    
+                    }
+
                     if(!UIConfig.autoReleaseAssets || item.type == PackageItemType.Sound) {
                         item.addRef();
                     }
@@ -769,10 +769,10 @@ export class UIPackage {
             case PackageItemType.Font:
                 if (!item.decoded) {
                     item.decoded = true;
-                    await this.loadFontAsync(item);  
+                    await this.loadFontAsync(item);
                     if(!UIConfig.autoReleaseAssets) {
                         item.addRef();
-                    }     
+                    }
                     item.__loaded = true;
                 }
                 break;
@@ -799,7 +799,7 @@ export class UIPackage {
                 }, 10, this);
             }else{
                 done(true);
-            }                
+            }
         };
 
         await new Promise((resolve, reject)=>{
@@ -879,7 +879,7 @@ export class UIPackage {
                 let atlasTexture: Texture2D = null;
                 atlasTexture = <Texture2D> await this.getItemAssetAsync2(sprite.atlas);
                 frame.altasPackageItem = sprite.atlas;
-                
+
                 if (atlasTexture) {
                     let sx: number = item.width / frame.rect.width;
                     let sf = new SpriteFrame();
@@ -931,7 +931,7 @@ export class UIPackage {
             if (spriteId != null && (sprite = this._sprites[spriteId]) != null) {
                 let atlasTexture: Texture2D = <Texture2D> this.getItemAsset(sprite.atlas);
                 frame.altasPackageItem = sprite.atlas;
-                
+
                 if (atlasTexture) {
                     let sx: number = item.width / frame.rect.width;
                     let sf = new SpriteFrame();
@@ -1050,7 +1050,7 @@ export class UIPackage {
             mainSprite.atlas.load();
             mainTexture = <Texture2D>mainSprite.atlas.asset;
         }
-        
+
         let spriteFrame = new SpriteFrame();
         spriteFrame.texture = mainTexture;
         font.spriteFrame = spriteFrame;
@@ -1160,7 +1160,7 @@ export class UIPackage {
             }
             item.parent = mainSprite.atlas;
         }
-        
+
         let spriteFrame = new SpriteFrame();
         spriteFrame.texture = mainTexture;
         font.spriteFrame = spriteFrame;

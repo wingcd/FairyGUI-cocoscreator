@@ -33,6 +33,7 @@ export class GLoader extends GObject {
     private _content2?: GComponent;
     private _updatingLayout: boolean;
     private _dirtyVersion: number = 0;
+    private _externalAssets: { [path: string]: Asset } = {};
 
     private static _errorSignPool: GObjectPool = new GObjectPool();
 
@@ -60,10 +61,6 @@ export class GLoader extends GObject {
     }
 
     public dispose(): void {
-        if (this._contentItem == null) {
-            if (this._content.spriteFrame)
-                this.freeExternal(this._content.spriteFrame);
-        }
         if (this._content2) {
             this._content2.dispose();
             this._content2 = null;
@@ -292,7 +289,7 @@ export class GLoader extends GObject {
                 this._content.__update();
                 this.updateLayout();
             }
-        } 
+        }
         else if (this._contentItem.type == PackageItemType.MovieClip) {
             this._content.interval = this._contentItem.interval;
             this._content.swing = this._contentItem.swing;
@@ -313,7 +310,7 @@ export class GLoader extends GObject {
                 this._container.addChild(this._content2.node);
                 this.updateLayout();
             }
-        } 
+        }
         else
             this.setErrorState();
     }
@@ -329,8 +326,8 @@ export class GLoader extends GObject {
             this.sourceHeight = contentItem.height;
             contentItem = contentItem.getHighResolution();
 
-            if(!UIConfig.enableDelayLoad || 
-                contentItem.__loaded && contentItem.decoded || 
+            if(!UIConfig.enableDelayLoad ||
+                contentItem.__loaded && contentItem.decoded ||
                 contentItem.type == PackageItemType.Component) {
                 contentItem.load();
                 this.init(contentItem, itemURL, dirtyVersion);
@@ -354,6 +351,8 @@ export class GLoader extends GObject {
 
             if (err)
                 console.warn(err);
+
+            this.addExternalAssetRef(this._url, asset);
 
             if (asset instanceof SpriteFrame)
                 this.onExternalLoadSuccess(asset);
@@ -386,26 +385,44 @@ export class GLoader extends GObject {
         }
     }
 
-    protected freeExternal(texture: SpriteFrame): void {
-        if(texture) {
-            texture.decRef();
-            texture.texture.decRef();
+    private addExternalAssetRef(url: string, asset: Asset) {
+      if (!this._externalAssets[url]) {
+          this._externalAssets[url] = asset;
 
-            if(UIConfig.autoReleaseAssets) {
-                if(texture.refCount==0) {
-                    assetManager.releaseAsset(texture);
+          asset.addRef();
+      }
+    }
+
+    protected freeExternal(): void {
+        const bundle = resources;
+
+        for (const key in this._externalAssets) {
+            if (!Object.prototype.hasOwnProperty.call(this._externalAssets, key)) {
+                continue;
+            }
+
+            const asset = this._externalAssets[key];
+
+            asset.decRef();
+
+            if (asset.refCount <= 0 && UIConfig.autoReleaseAssets) {
+                assetManager.releaseAsset(asset);
+
+                if (key.startsWith("http://")
+                    || key.startsWith("https://")
+                    || key.startsWith('/')) {
                 }
-                if(texture.texture.refCount==0) {
-                    assetManager.releaseAsset(texture.texture);
+                else {
+                    bundle.release(key + "/spriteFrame");
                 }
             }
         }
+
+        this._externalAssets = {};
     }
 
-    protected onExternalLoadSuccess(texture: SpriteFrame): void {
-        texture.addRef();
-        texture.texture.addRef();
 
+    protected onExternalLoadSuccess(texture: SpriteFrame): void {
         this._content.spriteFrame = texture;
         this._content.type = Sprite.Type.SIMPLE;
         this.sourceWidth = texture.getRect().width;
@@ -538,13 +555,7 @@ export class GLoader extends GObject {
     private clearContent(): void {
         this.clearErrorState();
 
-        if(!this.url && this._contentItem) {
-
-        }else if (!this._contentItem) {
-            var texture: SpriteFrame = this._content.spriteFrame;
-            if (texture)
-                this.freeExternal(texture);
-        }else{
+        if (this._contentItem) {
             this._contentItem.decRef();
         }
 
@@ -556,6 +567,8 @@ export class GLoader extends GObject {
         this._content.frames = null;
         this._content.spriteFrame = null;
         this._contentItem = null;
+
+        this.freeExternal();
     }
 
     protected handleSizeChanged(): void {
@@ -647,7 +660,7 @@ export class GLoader extends GObject {
 
         if (this._url)
             this.loadContent();
-        
+
         this._content.fillMethod = buffer.readByte();
         if (this._content.fillMethod != 0) {
 
