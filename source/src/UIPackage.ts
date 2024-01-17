@@ -77,12 +77,13 @@ export class UIPackage {
         if (!asset)
             throw "Resource '" + path + "' not ready";
 
-        if (!asset._buffer)
+        const buffer = asset.buffer();
+        if (!buffer)
             throw "Missing asset data.";
 
         pkg = new UIPackage();
         pkg._bundle = resources;
-        pkg.loadPackage(new ByteBuffer(asset._buffer), path);
+        pkg.loadPackage(new ByteBuffer(buffer), path);
         assetManager.releaseAsset(asset);
 
         _instById[pkg.id] = pkg;
