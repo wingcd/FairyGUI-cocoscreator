@@ -12838,11 +12838,16 @@ class GLoader extends GObject {
             }
             else if (asset instanceof ImageAsset) {
                 let tex = new Texture2D();
-                tex.reset({
-                    width: asset.width,
-                    height: asset.height,
-                });
-                tex.uploadData(asset.data);
+                if (sys.isNative) {
+                    tex.image = asset;
+                }
+                else {
+                    tex.reset({
+                        width: asset.width,
+                        height: asset.height,
+                    });
+                    tex.uploadData(asset.data);
+                }
                 let sp = new SpriteFrame();
                 sp.texture = tex;
                 this.onExternalLoadSuccess(sp);
