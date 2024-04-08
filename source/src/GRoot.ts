@@ -26,6 +26,8 @@ export class GRoot extends GComponent {
 
     private static _inst: GRoot;
 
+    public enableAutoClosePopup: boolean = true;
+
     public static get inst(): GRoot {
         if (!GRoot._inst)
             throw 'Call GRoot.create first!';
@@ -411,7 +413,7 @@ export class GRoot extends GComponent {
             this.hideTooltips();
 
         this._justClosedPopups.length = 0;
-        if (this._popupStack.length > 0) {
+        if (this.enableAutoClosePopup && this._popupStack.length > 0) {
             let mc: GObject = evt.initiator;
             while (mc && mc != this) {
                 let pindex: number = this._popupStack.indexOf(mc);

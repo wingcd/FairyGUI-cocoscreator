@@ -11995,6 +11995,7 @@ class GRoot extends GComponent {
     }
     constructor() {
         super();
+        this.enableAutoClosePopup = true;
         this._node.name = "GRoot";
         this.opaque = false;
         this._volumeScale = 1;
@@ -12297,7 +12298,7 @@ class GRoot extends GComponent {
         if (this._tooltipWin)
             this.hideTooltips();
         this._justClosedPopups.length = 0;
-        if (this._popupStack.length > 0) {
+        if (this.enableAutoClosePopup && this._popupStack.length > 0) {
             let mc = evt.initiator;
             while (mc && mc != this) {
                 let pindex = this._popupStack.indexOf(mc);

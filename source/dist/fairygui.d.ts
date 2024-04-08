@@ -400,6 +400,7 @@ declare module 'fairygui-cc/GRoot' {
     import { GObject } from "fairygui-cc/GObject";
     import { Window } from "fairygui-cc/Window";
     export class GRoot extends GComponent {
+        enableAutoClosePopup: boolean;
         static get inst(): GRoot;
         static create(): GRoot;
         constructor();
