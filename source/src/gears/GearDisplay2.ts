@@ -26,4 +26,11 @@ export class GearDisplay2 extends GearBase {
             v = v || connected;
         return v;
     }
+
+    public copyFrom(gg: GearDisplay2): void {
+        super.copyFrom(gg);
+
+        this.pages = gg.pages.concat();
+        this.condition = gg.condition;
+    }
 }

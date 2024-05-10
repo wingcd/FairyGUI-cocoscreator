@@ -1,6 +1,6 @@
 import { Event as CCEvent, Node, Touch, Vec2 } from 'cc';
-import { GObject } from '../GObject';
 import { InputProcessor } from './InputProcessor';
+import { Decls } from '../utils/Const';
 
 export class Event extends CCEvent {
     public static TOUCH_BEGIN: string = "fui_touch_begin";
@@ -35,7 +35,7 @@ export class Event extends CCEvent {
 
     public static CLICK_ITEM: string = "fui_click_item";
 
-    public initiator: GObject;
+    public initiator: typeof Decls.GObject;
     public pos: Vec2 = new Vec2();
     public touchId: number = 0;
     public clickCount: number = 0;
@@ -48,8 +48,8 @@ export class Event extends CCEvent {
         super(type, bubbles);
     }
 
-    public get sender(): GObject | null {
-        return GObject.cast(<Node>this.currentTarget);
+    public get sender(): typeof Decls.GObject | null {
+        return Decls.GObject.cast(<Node>this.currentTarget);
     }
 
     public get isShiftDown(): boolean {
@@ -61,7 +61,7 @@ export class Event extends CCEvent {
     }
 
     public captureTouch() {
-        let obj = GObject.cast(<Node>this.currentTarget);
+        let obj = Decls.GObject.cast(<Node>this.currentTarget);
         if (obj)
             this._processor.addTouchMonitor(this.touchId, obj);
     }

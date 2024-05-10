@@ -2,12 +2,13 @@ import { Component, director, game, Node } from "cc";
 import { PackageItemType, ObjectType } from "./FieldTypes";
 import { GComponent } from "./GComponent";
 import { GList } from "./GList";
-import { constructingDepth, GObject } from "./GObject";
+import { GObject } from "./GObject";
 import { PackageItem } from "./PackageItem";
 import { UIConfig } from "./UIConfig";
 import { UIObjectFactory } from "./UIObjectFactory";
 import { UIPackage } from "./UIPackage";
 import { ByteBuffer } from "./utils/ByteBuffer";
+import { constructingDepth } from "./utils/Const";
 
 export class AsyncOperation {
     public callback: (obj: GObject) => void;

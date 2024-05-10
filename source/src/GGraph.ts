@@ -274,4 +274,23 @@ export class GGraph extends GObject {
             this.updateGraph();
         }
     }
+
+    public copyFrom(graph: GGraph): void {
+        super.copyFrom(graph);
+
+        this._type = graph._type;
+        this._lineSize = graph._lineSize;
+        this._lineColor.set(graph._lineColor);
+        this._fillColor.set(graph._fillColor);
+        if (graph._cornerRadius)
+            this._cornerRadius = graph._cornerRadius.slice();
+        this._sides = graph._sides;
+        this._startAngle = graph._startAngle;
+        if (graph._polygonPoints)
+            this._polygonPoints = graph._polygonPoints.slice();
+        if (graph._distances)
+            this._distances = graph._distances.slice();
+
+        this.updateGraph();        
+    }
 }

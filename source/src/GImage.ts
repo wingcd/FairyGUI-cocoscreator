@@ -10,6 +10,7 @@ export class GImage extends GObject {
     public _content: Image;
     private _contentPackageItem?: PackageItem;
     onReady: Function;
+    private _onReadyCallbacks: Function[] = [];
 
     public constructor() {
         super();
@@ -84,6 +85,11 @@ export class GImage extends GObject {
         if(this.onReady) {
             this.onReady();
             this.onReady = null;
+
+            for(let i=this._onReadyCallbacks.length-1; i>=0; i--) {
+                this._onReadyCallbacks[i]();
+                this._onReadyCallbacks.splice(i, 1);
+            }
         }
     }
 
@@ -152,6 +158,27 @@ export class GImage extends GObject {
             this._content.fillOrigin = buffer.readByte();
             this._content.fillClockwise = buffer.readBool();
             this._content.fillAmount = buffer.readFloat();
+        }
+    }
+
+    public copyFrom(image: GImage): void {
+        super.copyFrom(image);;
+            
+        this.color.set(image.color);
+        this.flip = image.flip;
+        this.fillMethod = image.fillMethod;
+        this.fillOrigin = image.fillOrigin;
+        this.fillClockwise = image.fillClockwise;
+        this.fillAmount = image.fillAmount;
+
+        let callback = () => {
+            this.init(image._contentPackageItem);
+        };
+
+        if(!image._content.spriteFrame) {
+            image._onReadyCallbacks.push(callback);
+        }else{
+            callback();
         }
     }
 }

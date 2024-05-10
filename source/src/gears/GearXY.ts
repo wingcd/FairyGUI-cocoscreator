@@ -128,6 +128,26 @@ export class GearXY extends GearBase {
 
         this.updateState();
     }
+
+    public copyFrom(gg: GearXY): void {
+        super.copyFrom(gg);
+
+        this.positionsInPercent = gg.positionsInPercent;
+        var data: any = gg._storage;
+        for (var i in data) {
+            var pt: GearXYValue = data[i];
+            var ret: GearXYValue = {};
+            ret.x = pt.x;
+            ret.y = pt.y;
+            ret.px = pt.px;
+            ret.py = pt.py;
+            this._storage[i] = ret;
+        }
+        this._default.x = gg._default.x;
+        this._default.y = gg._default.y;
+        this._default.px = gg._default.px;
+        this._default.py = gg._default.py;
+    }
 }
 
 interface GearXYValue {

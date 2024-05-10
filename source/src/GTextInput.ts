@@ -203,6 +203,23 @@ export class GTextInput extends GTextField {
             this._editBox.placeholderLabel.verticalAlign = vAlign;
         }
     }
+
+    public copyFrom(tf: GTextInput): void {
+        super.copyFrom(tf);
+
+        this.promptText = tf.promptText;
+        this.maxLength = tf.maxLength;
+        this.restrict = tf.restrict;
+        this.password = tf.password;
+        this.align = tf.align;
+        this.verticalAlign = tf.verticalAlign;
+        this.singleLine = tf.singleLine;      
+        if(this._editBox.placeholderLabel) {
+            let color = tf._editBox.placeholderLabel.color;
+            color.set(tf._editBox.placeholderLabel.color);
+            this._editBox.placeholderLabel.color = color;
+        }
+    }
 }
 
 class MyEditBox extends EditBox {

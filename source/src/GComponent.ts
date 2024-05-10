@@ -1126,6 +1126,7 @@ export class GComponent extends GObject {
             nextPos += buffer.position;
 
             var controller: Controller = new Controller();
+            controller.index = i;
             this._controllers.push(controller);
             controller.parent = this;
             controller.setup(buffer);
@@ -1340,6 +1341,52 @@ export class GComponent extends GObject {
         action.toPage = toPages;
 
         ctrl.addAction(action);
+    }
+
+    public copyFrom(source: GComponent): void {
+        this._underConstruct = true;
+        this._buildingDisplayList = true;
+
+        this.beforeCopy(source);
+
+        for(let i: number = 0; i < source._transitions.length; i++) {
+            let trans = source._transitions[i];
+            this.addTransition(trans);
+        }
+        
+        for(let i = 0; i < source._controllers.length; i++) {
+            let cc = source._controllers[i].clone();
+            this.addController(cc);
+        }
+
+        for(let i=0; i< source._children.length; i++) {
+            let g = source._children[i];
+            let newChild = new (g.constructor as any)() as GObject;
+            newChild._underConstruct = true;
+            //@ts-ignore
+            newChild.copyFrom(g);
+            newChild._parent = this;
+            newChild.node.parent = this._container;
+            this._children.push(newChild);
+            
+            //@ts-ignore
+            newChild.afterCopy(g);
+            newChild._underConstruct = false;
+        }
+
+        if(source._group) {
+            this._group = source._group;
+        }
+
+        this.afterCopy(source);
+
+        this.applyAllControllers();
+
+        this._buildingDisplayList = false;
+        this._underConstruct = false;
+
+        this.buildNativeDisplayList();
+        this.setBoundsChangedFlag();
     }
 }
 

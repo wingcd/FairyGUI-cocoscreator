@@ -437,8 +437,10 @@ export class GButton extends GComponent {
         if (iv != 0)
             this.titleFontSize = iv;
         iv = buffer.readShort();
-        if (iv >= 0)
+        if (iv >= 0) {
             this._relatedController = this.parent.getControllerAt(iv);
+            this._relatedController.index = iv;
+        }
         this._relatedPageId = buffer.readS();
 
         str = buffer.readS();
@@ -554,6 +556,31 @@ export class GButton extends GComponent {
         else {
             if (this._relatedController)
                 this._relatedController.selectedPageId = this._relatedPageId;
+        }
+    }
+
+    public copyFrom(source: GButton): void {
+        super.copyFrom(source);
+        
+        if (!(source instanceof GButton))
+            return;
+
+        this._mode = source._mode;
+        this._sound = source._sound;
+        this._soundVolumeScale = source._soundVolumeScale;
+        this._downEffect = source._downEffect;
+        this._downEffectValue = source._downEffectValue;
+        if(source._downColor) {
+            this._downColor = new Color();
+            this._downColor.set(source._downColor);
+        }
+        this._downScaled = source._downScaled;
+        if(source._buttonController) {
+            this._buttonController = this.getController("button");
+        }
+        if(source._relatedController) {
+            this._relatedController = this._parent.getControllerAt(source._relatedController.index);
+            this._relatedPageId = source._relatedPageId;
         }
     }
 }

@@ -114,6 +114,26 @@ export class GearSize extends GearBase {
 
         this.updateState();
     }
+
+    public copyFrom(gg: GearSize): void {
+        super.copyFrom(gg);
+
+        this._default.width = gg._default.width;
+        this._default.height = gg._default.height;
+        this._default.scaleX = gg._default.scaleX;
+        this._default.scaleY = gg._default.scaleY;
+
+        var data: any = gg._storage;
+        for (var i in data) {
+            var gv: GearSizeValue = data[i];
+            var ret: GearSizeValue = {};
+            ret.width = gv.width;
+            ret.height = gv.height;
+            ret.scaleX = gv.scaleX;
+            ret.scaleY = gv.scaleY;
+            this._storage[i] = ret;
+        }
+    }
 }
 
 interface GearSizeValue {

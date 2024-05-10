@@ -105,6 +105,26 @@ export class GearLook extends GearBase {
         gv.grayed = this._owner.grayed;
         gv.touchable = this._owner.touchable;
     }
+
+    public copyFrom(gg: GearLook): void {
+        super.copyFrom(gg);
+
+        this._default.alpha = gg._default.alpha;
+        this._default.rotation = gg._default.rotation;
+        this._default.grayed = gg._default.grayed;
+        this._default.touchable = gg._default.touchable;
+
+        var data: any = gg._storage;
+        for (var i in data) {
+            var gv: GearLookValue = data[i];
+            var ret: GearLookValue = {};
+            ret.alpha = gv.alpha;
+            ret.rotation = gv.rotation;
+            ret.grayed = gv.grayed;
+            ret.touchable = gv.touchable;
+            this._storage[i] = ret;
+        }
+    }
 }
 
 interface GearLookValue {

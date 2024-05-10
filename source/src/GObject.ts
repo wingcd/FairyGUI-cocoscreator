@@ -15,12 +15,12 @@ import { GearLook } from "./gears/GearLook";
 import { GearSize } from "./gears/GearSize";
 import { GearText } from "./gears/GearText";
 import { GearXY } from "./gears/GearXY";
-import { GGroup } from "./GGroup";
 import { GTreeNode } from "./GTreeNode";
 import { PackageItem } from "./PackageItem";
 import { Relations } from "./Relations";
 import { UIConfig } from "./UIConfig";
 import { ByteBuffer } from "./utils/ByteBuffer";
+import { Decls } from "./utils/Const";
 
 export class GObject {
     public data?: any;
@@ -47,7 +47,7 @@ export class GObject {
     protected _dragStartPos?: Vec2;
 
     protected _relations: Relations;
-    protected _group: GGroup | null;
+    protected _group: any | null;
     protected _gears: GearBase[];
     protected _node: Node;
     protected _dragBounds?: Rect;
@@ -99,6 +99,10 @@ export class GObject {
         this._partner = this._node.addComponent(GObjectPartner);
     }
 
+    public get objectType() {
+        return "GObject";
+    }
+
     public get id(): string {
         return this._id;
     }
@@ -136,7 +140,8 @@ export class GObject {
             this._y = yv;
 
             this.handlePositionChanged();
-            if (this instanceof GGroup)
+            if (this.objectType == "GGroup")
+                //@ts-ignore
                 this.moveChildren(dx, dy);
 
             this.updateGear(1);
@@ -245,7 +250,8 @@ export class GObject {
             else
                 this.handlePositionChanged();
 
-            if (this instanceof GGroup)
+            if (this.objectType == "GGroup")
+                //@ts-ignore
                 this.resizeChildren(dWidth, dHeight);
 
             this.updateGear(2);
@@ -389,7 +395,8 @@ export class GObject {
 
             this._uiOpacity.opacity = this._alpha * 255;
 
-            if (this instanceof GGroup)
+            if (this.objectType == "GGroup")
+                //@ts-ignore
                 this.handleAlphaChanged();
 
             this.updateGear(3);
@@ -477,7 +484,7 @@ export class GObject {
             return null;
     }
 
-    public set group(value: GGroup) {
+    public set group(value: any) {
         if (this._group != value) {
             if (this._group)
                 this._group.setBoundsChangedFlag();
@@ -487,7 +494,7 @@ export class GObject {
         }
     }
 
-    public get group(): GGroup {
+    public get group(): any{
         return this._group;
     }
 
@@ -845,7 +852,7 @@ export class GObject {
     public handleVisibleChanged(): void {
         this._node.active = this._finalVisible;
 
-        if (this instanceof GGroup)
+        if (this.objectType == "GGroup")
             this.handleVisibleChanged();
 
         if (this._parent)
@@ -995,7 +1002,7 @@ export class GObject {
 
         var groupId: number = buffer.readShort();
         if (groupId >= 0)
-            this.group = <GGroup>this.parent.getChildAt(groupId);
+            this.group = this.parent.getChildAt(groupId);
 
         buffer.seek(beginPos, 2);
 
@@ -1131,6 +1138,53 @@ export class GObject {
             this._node.emit(FUIEvent.DRAG_END, evt);
         }
     }
+
+    public clone(): GObject {
+        let obj: GObject = new (this.constructor as any)();
+        obj.copyFrom(this);                       
+        return obj;
+    }    
+
+    public copyFrom(source: GObject): void {
+        this.beforeCopy(source);
+        if(!this._underConstruct) {
+            this.afterCopy(source);
+        }
+    }
+
+    protected beforeCopy(source: GObject) {
+        this.name = source.name;
+        this._node.name = source._node.name;
+        this._id = source._id;
+        this.packageItem = source.packageItem;
+        this.setSize(source._rawWidth, source._rawHeight, true);
+        this.setPivot(source._uiTrans.anchorX, source._uiTrans.anchorY, source._pivotAsAnchor);
+        this.setPosition(source._x, source._y);
+        this.setScale(source._node.scale.x, source._node.scale.y);
+        this.rotation = source.rotation;
+        this.alpha = source.alpha;
+        this.visible = source.visible;
+        this.grayed = source.grayed;
+        this.touchable = source.touchable;
+        this._blendMode = source._blendMode;
+        if(source._dragBounds) {
+            if(!this._dragBounds)
+                this._dragBounds = new Rect();
+            this._dragBounds.set(source._dragBounds);
+        }
+        this._dragTesting = false;
+        this.data = source.data;
+
+        this._relations.copyFrom(source._relations);
+    }
+
+    protected afterCopy(source: GObject) {        
+        for(var i: number = 0; i < 10; i++) {
+            var gear: GearBase = source._gears[i];
+            if (gear)
+                this.getGear(i).copyFrom(gear);
+        }
+    }
 }
 
 //-------------------------------------------------------------------
@@ -1169,6 +1223,7 @@ export class GObjectPartner extends Component {
         (<any>this.node)["$gobj"].onDestroy();
     }
 }
+Decls.GObject = GObject;
 
 //-------------------------------------------------------------------
 
@@ -1191,11 +1246,3 @@ var sGlobalDragStart: Vec2 = new Vec2();
 var sGlobalRect: Rect = new Rect();
 var s_dragging: boolean;
 var s_dragQuery: boolean;
-
-export interface IGRoot {
-    inst: any;
-}
-
-export var Decls: { GRoot?: IGRoot } = {};
-
-export var constructingDepth: { n: number } = { n: 0 };

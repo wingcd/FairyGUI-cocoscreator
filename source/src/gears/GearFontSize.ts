@@ -33,4 +33,14 @@ export class GearFontSize extends GearBase {
     public updateState(): void {
         this._storage[this._controller.selectedPageId] = this._owner.getProp(ObjectPropID.FontSize);
     }
+
+    public copyFrom(gg: GearFontSize): void {
+        super.copyFrom(gg);
+        
+        this._default = gg._default;
+        var data: any = gg._storage;
+        for (var i in data) {
+            this._storage[i] = data[i];
+        }        
+    }
 }

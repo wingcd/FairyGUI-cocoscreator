@@ -3,9 +3,9 @@ import { Event as FUIEvent } from "./event/Event";
 import { RelationType } from "./FieldTypes";
 import { GComponent } from "./GComponent";
 import { GObject } from "./GObject";
-import { GRoot } from "./GRoot";
 import { UIConfig } from "./UIConfig";
 import { UIPackage } from "./UIPackage";
+import { Decls } from "./utils/Const";
 
 export interface IUISource {
     fileName: string;
@@ -110,10 +110,10 @@ export class Window extends GComponent {
     }
 
     public show(): void {
-        GRoot.inst.showWindow(this);
+        Decls.GRoot.inst.showWindow(this);
     }
 
-    public showOn(root: GRoot): void {
+    public showOn(root: any): void {
         root.showWindow(this);
     }
 
@@ -123,13 +123,13 @@ export class Window extends GComponent {
     }
 
     public hideImmediately(): void {
-        var r: GRoot = (this.parent instanceof GRoot) ? this.parent : null;
+        var r:any = (this.parent.objectType == "GRoot") ? this.parent : null;
         if (!r)
-            r = GRoot.inst;
+            r = Decls.GRoot.inst;
         r.hideWindowImmediately(this);
     }
 
-    public centerOn(r: GRoot, restraint?: boolean) {
+    public centerOn(r: any, restraint?: boolean) {
         this.setPosition(Math.round((r.width - this.width) / 2), Math.round((r.height - this.height) / 2));
         if (restraint) {
             this.addRelation(r, RelationType.Center_Center);
@@ -161,7 +161,7 @@ export class Window extends GComponent {
     }
 
     public bringToFront(): void {
-        GRoot.inst.bringToFront(this);
+        Decls.GRoot.inst.bringToFront(this);
     }
 
     public showModalWait(requestingCmd?: number): void {

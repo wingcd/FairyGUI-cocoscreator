@@ -216,4 +216,19 @@ export class GLabel extends GComponent {
             }
         }
     }
+
+    public copyFrom(obj: GLabel): void {
+        super.copyFrom(obj);
+
+        this._titleObject = this.getChild("title");
+        this._iconObject = this.getChild("icon");
+        this.title = obj.title;
+        this.icon = obj.icon;
+        if(this._titleObject) {
+            let c = this.titleColor;
+            c.set(obj.titleColor);
+            this.titleColor = c;
+            this.titleFontSize = obj.titleFontSize;
+        }
+    }
 }

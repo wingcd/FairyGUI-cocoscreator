@@ -19,6 +19,10 @@ export class GGroup extends GObject {
 
     public _updating: number = 0;
 
+    public get objectType() {
+        return "GGroup";
+    }
+
     constructor() {
         super();
 
@@ -454,5 +458,18 @@ export class GGroup extends GObject {
 
         if (!this.visible)
             this.handleVisibleChanged();
+    }
+
+    public copyFrom(source: GGroup): void {
+        super.copyFrom(source);
+
+        var g: GGroup = <GGroup>(source);
+        this._layout = g._layout;
+        this._lineGap = g._lineGap;
+        this._columnGap = g._columnGap;
+        this._excludeInvisibles = g._excludeInvisibles;
+        this._autoSizeDisabled = g._autoSizeDisabled;
+        this._mainGridIndex = g._mainGridIndex;
+        this._mainGridMinSize = g._mainGridMinSize;
     }
 }

@@ -1,14 +1,15 @@
 import { Controller } from "../Controller";
-import { constructingDepth, GObject } from "../GObject";
 import { EaseType } from "../tween/EaseType";
 import { GTweener } from "../tween/GTweener";
 import { ByteBuffer } from "../utils/ByteBuffer";
+import { constructingDepth } from '../utils/Const';
 
 export class GearBase {
     public static disableAllTweenEffect?: boolean;
 
-    public _owner: GObject;
+    public _owner: any;
     protected _controller: Controller;
+    private _controllerIndex: number;
     protected _tweenConfig: GearTweenConfig;
 
     public dispose(): void {
@@ -41,7 +42,8 @@ export class GearBase {
     }
 
     public setup(buffer: ByteBuffer): void {
-        this._controller = this._owner.parent.getControllerAt(buffer.readShort());
+        this._controllerIndex = buffer.readShort();
+        this._controller = this._owner.parent.getControllerAt(this._controllerIndex);
         this.init();
 
         var i: number;
@@ -109,6 +111,22 @@ export class GearBase {
 
     public updateState(): void {
     }
+
+    public copyFrom(source: GearBase): void {
+        if(source._tweenConfig) {
+            if (!this._tweenConfig)
+                this._tweenConfig = new GearTweenConfig();
+            this._tweenConfig.copyFrom(source._tweenConfig);
+        }
+        if(this._owner?.parent) {
+            this._controller = this._owner.parent.getControllerAt(source._controllerIndex);
+        }
+        if ("positionsInPercent" in source) {
+            //@ts-ignore
+            this["positionsInPercent"] = source["positionsInPercent"];
+        }
+        this.init();
+    }
 }
 
 export class GearTweenConfig {
@@ -125,6 +143,13 @@ export class GearTweenConfig {
         this.easeType = EaseType.QuadOut;
         this.duration = 0.3;
         this.delay = 0;
+    }
+
+    public copyFrom(source: GearTweenConfig): void {
+        this.tween = source.tween;
+        this.easeType = source.easeType;
+        this.duration = source.duration;
+        this.delay = source.delay;
     }
 }
 

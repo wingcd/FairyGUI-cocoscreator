@@ -35,4 +35,10 @@ export class GearDisplay extends GearBase {
         else
             this._visible = 0;
     }
+
+    public copyFrom(gg: GearDisplay): void {
+        super.copyFrom(gg);
+
+        this.pages = gg.pages.concat();
+    }
 }

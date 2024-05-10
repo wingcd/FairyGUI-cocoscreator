@@ -3,8 +3,8 @@
 //   ../cc
 
 declare module 'fairygui-cc' {
-    export { GGroup } from "fairygui-cc/GGroup";
     export { GObject } from "fairygui-cc/GObject";
+    export { GGroup } from "fairygui-cc/GGroup";
     export { GGraph } from "fairygui-cc/GGraph";
     export { GImage } from "fairygui-cc/GImage";
     export { GMovieClip } from "fairygui-cc/GMovieClip";
@@ -63,39 +63,6 @@ declare module 'fairygui-cc' {
     export { ByteBuffer } from "fairygui-cc/utils/ByteBuffer";
 }
 
-declare module 'fairygui-cc/GGroup' {
-    import { GObject } from "fairygui-cc/GObject";
-    import { ByteBuffer } from "fairygui-cc/utils/ByteBuffer";
-    export class GGroup extends GObject {
-        _updating: number;
-        constructor();
-        dispose(): void;
-        get layout(): number;
-        set layout(value: number);
-        get lineGap(): number;
-        set lineGap(value: number);
-        get columnGap(): number;
-        set columnGap(value: number);
-        get excludeInvisibles(): boolean;
-        set excludeInvisibles(value: boolean);
-        get autoSizeDisabled(): boolean;
-        set autoSizeDisabled(value: boolean);
-        get mainGridMinSize(): number;
-        set mainGridMinSize(value: number);
-        get mainGridIndex(): number;
-        set mainGridIndex(value: number);
-        setBoundsChangedFlag(positionChangedOnly?: boolean): void;
-        ensureSizeCorrect(): void;
-        ensureBoundsCorrect(): void;
-        moveChildren(dx: number, dy: number): void;
-        resizeChildren(dw: number, dh: number): void;
-        handleAlphaChanged(): void;
-        handleVisibleChanged(): void;
-        setup_beforeAdd(buffer: ByteBuffer, beginPos: number): void;
-        setup_afterAdd(buffer: ByteBuffer, beginPos: number): void;
-    }
-}
-
 declare module 'fairygui-cc/GObject' {
     import { Vec2, Rect, Component, Node, UITransform, UIOpacity } from "cc";
     import { Controller } from "fairygui-cc/Controller";
@@ -105,7 +72,6 @@ declare module 'fairygui-cc/GObject' {
     import { GearLook } from "fairygui-cc/gears/GearLook";
     import { GearSize } from "fairygui-cc/gears/GearSize";
     import { GearXY } from "fairygui-cc/gears/GearXY";
-    import { GGroup } from "fairygui-cc/GGroup";
     import { GTreeNode } from "fairygui-cc/GTreeNode";
     import { PackageItem } from "fairygui-cc/PackageItem";
     import { Relations } from "fairygui-cc/Relations";
@@ -133,7 +99,7 @@ declare module 'fairygui-cc/GObject' {
         protected _dragTesting?: boolean;
         protected _dragStartPos?: Vec2;
         protected _relations: Relations;
-        protected _group: GGroup | null;
+        protected _group: any | null;
         protected _gears: GearBase[];
         protected _node: Node;
         protected _dragBounds?: Rect;
@@ -161,6 +127,7 @@ declare module 'fairygui-cc/GObject' {
         _uiTrans: UITransform;
         _uiOpacity: UIOpacity;
         constructor();
+        get objectType(): string;
         get id(): string;
         get name(): string;
         set name(value: string);
@@ -220,8 +187,8 @@ declare module 'fairygui-cc/GObject' {
         set blendMode(value: BlendMode);
         get onStage(): boolean;
         get resourceURL(): string | null;
-        set group(value: GGroup);
-        get group(): GGroup;
+        set group(value: any);
+        get group(): any;
         getGear(index: number): GearBase;
         protected updateGear(index: number): void;
         checkGearController(index: number, c: Controller): boolean;
@@ -283,6 +250,10 @@ declare module 'fairygui-cc/GObject' {
         constructFromResource(): void;
         setup_beforeAdd(buffer: ByteBuffer, beginPos: number): void;
         setup_afterAdd(buffer: ByteBuffer, beginPos: number): void;
+        clone(): GObject;
+        copyFrom(source: GObject): void;
+        protected beforeCopy(source: GObject): void;
+        protected afterCopy(source: GObject): void;
     }
     export class GObjectPartner extends Component {
         _emitDisplayEvents?: boolean;
@@ -293,15 +264,41 @@ declare module 'fairygui-cc/GObject' {
         protected update(dt: number): void;
         protected onDestroy(): void;
     }
-    export interface IGRoot {
-        inst: any;
+}
+
+declare module 'fairygui-cc/GGroup' {
+    import { GObject } from "fairygui-cc/GObject";
+    import { ByteBuffer } from "fairygui-cc/utils/ByteBuffer";
+    export class GGroup extends GObject {
+        _updating: number;
+        get objectType(): string;
+        constructor();
+        dispose(): void;
+        get layout(): number;
+        set layout(value: number);
+        get lineGap(): number;
+        set lineGap(value: number);
+        get columnGap(): number;
+        set columnGap(value: number);
+        get excludeInvisibles(): boolean;
+        set excludeInvisibles(value: boolean);
+        get autoSizeDisabled(): boolean;
+        set autoSizeDisabled(value: boolean);
+        get mainGridMinSize(): number;
+        set mainGridMinSize(value: number);
+        get mainGridIndex(): number;
+        set mainGridIndex(value: number);
+        setBoundsChangedFlag(positionChangedOnly?: boolean): void;
+        ensureSizeCorrect(): void;
+        ensureBoundsCorrect(): void;
+        moveChildren(dx: number, dy: number): void;
+        resizeChildren(dw: number, dh: number): void;
+        handleAlphaChanged(): void;
+        handleVisibleChanged(): void;
+        setup_beforeAdd(buffer: ByteBuffer, beginPos: number): void;
+        setup_afterAdd(buffer: ByteBuffer, beginPos: number): void;
+        copyFrom(source: GGroup): void;
     }
-    export var Decls: {
-        GRoot?: IGRoot;
-    };
-    export var constructingDepth: {
-        n: number;
-    };
 }
 
 declare module 'fairygui-cc/GGraph' {
@@ -327,6 +324,7 @@ declare module 'fairygui-cc/GGraph' {
         setProp(index: number, value: any): void;
         protected _hitTest(pt: Vec2): GObject;
         setup_beforeAdd(buffer: ByteBuffer, beginPos: number): void;
+        copyFrom(graph: GGraph): void;
     }
 }
 
@@ -358,6 +356,7 @@ declare module 'fairygui-cc/GImage' {
         getProp(index: number): any;
         setProp(index: number, value: any): void;
         setup_beforeAdd(buffer: ByteBuffer, beginPos: number): void;
+        copyFrom(image: GImage): void;
     }
 }
 
@@ -403,6 +402,7 @@ declare module 'fairygui-cc/GRoot' {
         enableAutoClosePopup: boolean;
         static get inst(): GRoot;
         static create(): GRoot;
+        get objectType(): string;
         constructor();
         protected onDestroy(): void;
         getTouchPosition(touchId?: number): Vec2;
@@ -532,6 +532,7 @@ declare module 'fairygui-cc/GTextField' {
         setProp(index: number, value: any): void;
         setup_beforeAdd(buffer: ByteBuffer, beginPos: number): void;
         setup_afterAdd(buffer: ByteBuffer, beginPos: number): void;
+        copyFrom(tf: GTextField): void;
     }
 }
 
@@ -598,6 +599,7 @@ declare module 'fairygui-cc/GTextInput' {
         protected updateFontSize(): void;
         protected updateOverflow(): void;
         setup_beforeAdd(buffer: ByteBuffer, beginPos: number): void;
+        copyFrom(tf: GTextInput): void;
     }
 }
 
@@ -662,6 +664,7 @@ declare module 'fairygui-cc/GLoader' {
         getProp(index: number): any;
         setProp(index: number, value: any): void;
         setup_beforeAdd(buffer: ByteBuffer, beginPos: number): void;
+        copyFrom(loader: GLoader): void;
     }
 }
 
@@ -818,6 +821,7 @@ declare module 'fairygui-cc/GComponent' {
         protected onDisable(): void;
         addTransition(transition: Transition, newName?: string, applyBaseValue?: boolean): void;
         addControllerAction(controlName: string, transition: Transition, fromPages: string[], toPages: string[], applyBaseValue?: boolean): void;
+        copyFrom(source: GComponent): void;
     }
 }
 
@@ -848,6 +852,7 @@ declare module 'fairygui-cc/GLabel' {
         setProp(index: number, value: any): void;
         protected constructExtension(buffer: ByteBuffer): void;
         setup_afterAdd(buffer: ByteBuffer, beginPos: number): void;
+        copyFrom(obj: GLabel): void;
     }
 }
 
@@ -911,6 +916,7 @@ declare module 'fairygui-cc/GButton' {
         setProp(index: number, value: any): void;
         protected constructExtension(buffer: ByteBuffer): void;
         setup_afterAdd(buffer: ByteBuffer, beginPos: number): void;
+        copyFrom(source: GButton): void;
     }
 }
 
@@ -962,6 +968,7 @@ declare module 'fairygui-cc/GComboBox' {
         dispose(): void;
         setup_afterAdd(buffer: ByteBuffer, beginPos: number): void;
         protected showDropdown(): void;
+        copyFrom(source: GComboBox): void;
     }
 }
 
@@ -1186,7 +1193,6 @@ declare module 'fairygui-cc/GTreeNode' {
 declare module 'fairygui-cc/Window' {
     import { GComponent } from "fairygui-cc/GComponent";
     import { GObject } from "fairygui-cc/GObject";
-    import { GRoot } from "fairygui-cc/GRoot";
     export interface IUISource {
         fileName: string;
         loaded: boolean;
@@ -1207,10 +1213,10 @@ declare module 'fairygui-cc/Window' {
         get contentArea(): GObject;
         set contentArea(value: GObject);
         show(): void;
-        showOn(root: GRoot): void;
+        showOn(root: any): void;
         hide(): void;
         hideImmediately(): void;
-        centerOn(r: GRoot, restraint?: boolean): void;
+        centerOn(r: any, restraint?: boolean): void;
         toggleStatus(): void;
         get isShowing(): boolean;
         get isTop(): boolean;
@@ -1268,6 +1274,7 @@ declare module 'fairygui-cc/Controller' {
     import { ControllerAction } from "fairygui-cc/action/ControllerAction";
     import { ByteBuffer } from "fairygui-cc/utils/ByteBuffer";
     export class Controller extends EventTarget {
+        index: number;
         name: string;
         parent: GComponent;
         autoRadioGroupDepth?: boolean;
@@ -1303,6 +1310,8 @@ declare module 'fairygui-cc/Controller' {
         runActions(): void;
         setup(buffer: ByteBuffer): void;
         addAction(action: ControllerAction): void;
+        copyFrom(source: Controller): void;
+        clone(): Controller;
     }
     import { EventTarget } from "cc";
     import { GComponent } from "fairygui-cc/GComponent";
@@ -1859,17 +1868,17 @@ declare module 'fairygui-cc/gears/GearAnimation' {
         protected addStatus(pageId: string, buffer: ByteBuffer): void;
         apply(): void;
         updateState(): void;
+        copyFrom(gg: GearAnimation): void;
     }
 }
 
 declare module 'fairygui-cc/gears/GearBase' {
     import { Controller } from "fairygui-cc/Controller";
-    import { GObject } from "fairygui-cc/GObject";
     import { GTweener } from "fairygui-cc/tween/GTweener";
     import { ByteBuffer } from "fairygui-cc/utils/ByteBuffer";
     export class GearBase {
         static disableAllTweenEffect?: boolean;
-        _owner: GObject;
+        _owner: any;
         protected _controller: Controller;
         protected _tweenConfig: GearTweenConfig;
         dispose(): void;
@@ -1883,6 +1892,7 @@ declare module 'fairygui-cc/gears/GearBase' {
         protected init(): void;
         apply(): void;
         updateState(): void;
+        copyFrom(source: GearBase): void;
     }
     export class GearTweenConfig {
         tween: boolean;
@@ -1892,6 +1902,7 @@ declare module 'fairygui-cc/gears/GearBase' {
         _displayLockToken: number;
         _tweener: GTweener;
         constructor();
+        copyFrom(source: GearTweenConfig): void;
     }
     export interface IGearXY {
     }
@@ -1905,6 +1916,7 @@ declare module 'fairygui-cc/gears/GearColor' {
         protected addStatus(pageId: string, buffer: ByteBuffer): void;
         apply(): void;
         updateState(): void;
+        copyFrom(gg: GearColor): void;
     }
 }
 
@@ -1917,6 +1929,7 @@ declare module 'fairygui-cc/gears/GearDisplay' {
         releaseLock(token: number): void;
         get connected(): boolean;
         apply(): void;
+        copyFrom(gg: GearDisplay): void;
     }
 }
 
@@ -1928,6 +1941,7 @@ declare module 'fairygui-cc/gears/GearDisplay2' {
         protected init(): void;
         apply(): void;
         evaluate(connected: boolean): boolean;
+        copyFrom(gg: GearDisplay2): void;
     }
 }
 
@@ -1939,6 +1953,7 @@ declare module 'fairygui-cc/gears/GearFontSize' {
         protected addStatus(pageId: string, buffer: ByteBuffer): void;
         apply(): void;
         updateState(): void;
+        copyFrom(gg: GearFontSize): void;
     }
 }
 
@@ -1950,6 +1965,7 @@ declare module 'fairygui-cc/gears/GearIcon' {
         protected addStatus(pageId: string, buffer: ByteBuffer): void;
         apply(): void;
         updateState(): void;
+        copyFrom(gg: GearIcon): void;
     }
 }
 
@@ -1961,6 +1977,7 @@ declare module 'fairygui-cc/gears/GearLook' {
         protected addStatus(pageId: string, buffer: ByteBuffer): void;
         apply(): void;
         updateState(): void;
+        copyFrom(gg: GearLook): void;
     }
 }
 
@@ -1973,6 +1990,7 @@ declare module 'fairygui-cc/gears/GearSize' {
         apply(): void;
         updateState(): void;
         updateFromRelations(dx: number, dy: number): void;
+        copyFrom(gg: GearSize): void;
     }
 }
 
@@ -1984,6 +2002,7 @@ declare module 'fairygui-cc/gears/GearText' {
         protected addStatus(pageId: string, buffer: ByteBuffer): void;
         apply(): void;
         updateState(): void;
+        copyFrom(gg: GearText): void;
     }
 }
 
@@ -1998,6 +2017,7 @@ declare module 'fairygui-cc/gears/GearXY' {
         apply(): void;
         updateState(): void;
         updateFromRelations(dx: number, dy: number): void;
+        copyFrom(gg: GearXY): void;
     }
 }
 
@@ -2077,8 +2097,8 @@ declare module 'fairygui-cc/display/MovieClip' {
 
 declare module 'fairygui-cc/event/Event' {
     import { Event as CCEvent, Vec2 } from 'cc';
-    import { GObject } from 'fairygui-cc/GObject';
     import { InputProcessor } from 'fairygui-cc/event/InputProcessor';
+    import { Decls } from 'fairygui-cc/utils/Const';
     export class Event extends CCEvent {
         static TOUCH_BEGIN: string;
         static TOUCH_MOVE: string;
@@ -2106,7 +2126,7 @@ declare module 'fairygui-cc/event/Event' {
         static PULL_DOWN_RELEASE: string;
         static PULL_UP_RELEASE: string;
         static CLICK_ITEM: string;
-        initiator: GObject;
+        initiator: typeof Decls.GObject;
         pos: Vec2;
         touchId: number;
         clickCount: number;
@@ -2115,7 +2135,7 @@ declare module 'fairygui-cc/event/Event' {
         mouseWheelDelta: number;
         _processor: InputProcessor;
         constructor(type: string, bubbles: boolean);
-        get sender(): GObject | null;
+        get sender(): typeof Decls.GObject | null;
         get isShiftDown(): boolean;
         get isCtrlDown(): boolean;
         captureTouch(): void;
@@ -2420,7 +2440,21 @@ declare module 'fairygui-cc/action/ControllerAction' {
         protected enter(controller: Controller): void;
         protected leave(controller: Controller): void;
         setup(buffer: ByteBuffer): void;
+        copyFrom(source: ControllerAction): void;
     }
+}
+
+declare module 'fairygui-cc/utils/Const' {
+    export interface IGRoot {
+        inst: any;
+    }
+    export var Decls: {
+        GRoot?: IGRoot;
+        GObject?: any;
+    };
+    export var constructingDepth: {
+        n: number;
+    };
 }
 
 declare module 'fairygui-cc/tween/TweenValue' {

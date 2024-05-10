@@ -4,13 +4,14 @@ import { InputProcessor } from "./event/InputProcessor";
 import { RelationType, PopupDirection } from "./FieldTypes";
 import { GComponent } from "./GComponent";
 import { GGraph } from "./GGraph";
-import { Decls, GObject } from "./GObject";
+import { GObject } from "./GObject";
 import { UIConfig } from "./UIConfig";
 import { UIContentScaler, updateScaler } from "./UIContentScaler";
 import { UIPackage } from "./UIPackage";
 import { Window } from "./Window";
 import { Event as FUIEvent } from "./event/Event";
 import { RefMannager } from "./RefManager";
+import { Decls } from "./utils/Const";
 
 export class GRoot extends GComponent {
     private _modalLayer: GGraph;
@@ -41,6 +42,10 @@ export class GRoot extends GComponent {
         GRoot._inst.onWinResize();
 
         return GRoot._inst;
+    }
+
+    public get objectType(): string {
+        return "GRoot";
     }
 
     public constructor() {

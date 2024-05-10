@@ -1,5 +1,5 @@
-export { GGroup } from "./GGroup";
 export { GObject } from "./GObject";
+export { GGroup } from "./GGroup";
 export { GGraph } from "./GGraph";
 export { GImage } from "./GImage";
 export { GMovieClip } from "./GMovieClip";

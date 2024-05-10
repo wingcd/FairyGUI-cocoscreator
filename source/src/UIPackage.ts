@@ -1,13 +1,14 @@
 import { Asset, assetManager, AssetManager, AudioClip, BitmapFont, BufferAsset, CCClass, ccenum, CCObject, dragonBones, ImageAsset, LabelAtlas, path, Rect, resources, Size, sp, SpriteFrame, Texture2D, Vec2 } from "cc";
 import PathUtils = path;
 import { ObjectType, PackageItemType } from "./FieldTypes";
-import { constructingDepth, GObject } from "./GObject";
+import { GObject } from "./GObject";
 import { PackageItem } from "./PackageItem";
 import { TranslationHelper } from "./TranslationHelper";
 import { ByteBuffer } from "./utils/ByteBuffer";
 import { PixelHitTestData } from "./event/HitTest";
 import { Frame } from "./display/MovieClip";
 import { UIConfig } from "./UIConfig";
+import { constructingDepth } from "./utils/Const";
 
 type PackageDependency = { id: string, name: string };
 

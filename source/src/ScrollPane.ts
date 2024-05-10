@@ -4,7 +4,7 @@ import { Event as FUIEvent } from "./event/Event";
 import { ScrollBarDisplayType, ScrollType } from "./FieldTypes";
 import { GComponent } from "./GComponent";
 import { GList } from "./GList";
-import { Decls, GObject } from "./GObject";
+import { GObject } from "./GObject";
 import { GScrollBar } from "./GScrollBar";
 import { Margin } from "./Margin";
 import { GTween } from "./tween/GTween";
@@ -12,6 +12,7 @@ import { GTweener } from "./tween/GTweener";
 import { UIConfig } from "./UIConfig";
 import { UIPackage } from "./UIPackage";
 import { ByteBuffer } from "./utils/ByteBuffer";
+import { Decls as GObjectDecls } from "./utils/Const";
 
 type AxisType = "x" | "y";
 
@@ -1033,7 +1034,7 @@ export class ScrollPane extends Component {
 
         if (this._tweening != 0) {
             this.killTween();
-            Decls.GRoot.inst.inputProcessor.cancelClick(evt.touchId);
+            GObjectDecls.GRoot.inst.inputProcessor.cancelClick(evt.touchId);
             this._dragged = true;
         }
         else

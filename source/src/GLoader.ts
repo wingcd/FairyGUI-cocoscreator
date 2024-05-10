@@ -37,6 +37,8 @@ export class GLoader extends GObject {
 
     private static _errorSignPool: GObjectPool = new GObjectPool();
 
+    private _onReadyCallbacks?: Array<Function> = [];
+
     public constructor() {
         super();
 
@@ -313,6 +315,11 @@ export class GLoader extends GObject {
         }
         else
             this.setErrorState();
+
+        for(let i=this._onReadyCallbacks.length-1; i>=0; i--) {
+            this._onReadyCallbacks[i]();
+            this._onReadyCallbacks.splice(i, 1);
+        }
     }
 
     protected loadFromPackage(itemURL: string) {
@@ -671,6 +678,30 @@ export class GLoader extends GObject {
             this._content.fillOrigin = buffer.readByte();
             this._content.fillClockwise = buffer.readBool();
             this._content.fillAmount = buffer.readFloat();
+        }
+    }
+
+    public copyFrom(loader: GLoader): void {
+        super.copyFrom(loader);
+
+        this._align = loader._align;
+        this._verticalAlign = loader._verticalAlign;
+        this._fill = loader._fill;
+        this._shrinkOnly = loader._shrinkOnly;
+        this._autoSize = loader._autoSize;
+        this._playing = loader._playing;
+        this._frame = loader._frame;
+
+        let callback = ()=>{
+            this.url = loader.url;   
+            this.color = loader.color;
+            this.init(loader._contentItem, loader._url, loader._dirtyVersion);  
+        };
+
+        if(loader._contentItem?.__loaded){
+            callback();
+        }else{
+            loader._onReadyCallbacks.push(callback);
         }
     }
 }

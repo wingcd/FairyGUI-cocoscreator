@@ -43,4 +43,13 @@ export class ChangePageAction extends ControllerAction {
         this.controllerName = buffer.readS();
         this.targetPage = buffer.readS();
     }
+
+    public copyFrom(source: ControllerAction): void {
+        super.copyFrom(source);
+
+        var action: ChangePageAction = <ChangePageAction>(source);
+        this.objectId = action.objectId;
+        this.controllerName = action.controllerName;
+        this.targetPage = action.targetPage;
+    }
 }

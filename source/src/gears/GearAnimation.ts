@@ -46,6 +46,13 @@ export class GearAnimation extends GearBase {
         gv.playing = this._owner.getProp(ObjectPropID.Playing);
         gv.frame = this._owner.getProp(ObjectPropID.Frame);
     }
+
+    public copyFrom(gg: GearAnimation): void {
+        super.copyFrom(gg);
+        
+        this._default.playing = gg._default.playing;
+        this._default.frame = gg._default.frame;
+    }
 }
 
 interface GearAnimationValue {

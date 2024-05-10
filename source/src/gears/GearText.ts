@@ -32,4 +32,14 @@ export class GearText extends GearBase {
     public updateState(): void {
         this._storage[this._controller.selectedPageId] = this._owner.text;
     }
+
+    public copyFrom(gg: GearText): void {
+        super.copyFrom(gg);
+        
+        this._default = gg._default;
+        var data: any = gg._storage;
+        for (var i in data) {
+            this._storage[i] = data[i];
+        }        
+    }
 }

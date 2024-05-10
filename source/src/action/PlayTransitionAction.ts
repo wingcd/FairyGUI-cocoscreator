@@ -41,4 +41,14 @@ export class PlayTransitionAction extends ControllerAction {
         this.delay = buffer.readFloat();
         this.stopOnExit = buffer.readBool();
     }
+
+    public copyFrom(source: ControllerAction): void {
+        super.copyFrom(source);
+
+        var action: PlayTransitionAction = <PlayTransitionAction>(source);
+        this.transitionName = action.transitionName;
+        this.playTimes = action.playTimes;
+        this.delay = action.delay;
+        this.stopOnExit = action.stopOnExit;
+    }
 }

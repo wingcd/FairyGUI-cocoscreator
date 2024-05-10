@@ -1,7 +1,7 @@
 import { Color, AudioClip } from "cc";
 import { ObjectPropID } from "./FieldTypes";
 import { GComponent } from "./GComponent";
-import { Decls, GObject } from "./GObject";
+import { GObject } from "./GObject";
 import { PackageItem } from "./PackageItem";
 import { EaseType } from "./tween/EaseType";
 import { GPath } from "./tween/GPath";
@@ -10,6 +10,7 @@ import { GTween } from "./tween/GTween";
 import { GTweener } from "./tween/GTweener";
 import { UIPackage } from "./UIPackage";
 import { ByteBuffer } from "./utils/ByteBuffer";
+import { Decls } from "./utils/Const";
 
 export class Transition {
     public name: string;

@@ -48,6 +48,19 @@ export class GearColor extends GearBase {
         gv.color = this._owner.getProp(ObjectPropID.Color);
         gv.strokeColor = this._owner.getProp(ObjectPropID.OutlineColor);
     }
+
+    public copyFrom(gg: GearColor): void {
+        super.copyFrom(gg);
+        
+        if(gg._default.color) {
+            this._default.color = new Color();
+            this._default.color.set(gg._default.color);
+        }
+        if(gg._default.strokeColor) {
+            this._default.strokeColor = new Color();
+            this._default.strokeColor.set(gg._default.strokeColor);
+        }
+    }
 }
 
 interface GearColorValue {

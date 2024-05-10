@@ -31,6 +31,8 @@ export class GTextField extends GObject {
     protected _fontPackageItem?: PackageItem;
     private _dirtyVersion: number = 0;
 
+    private _onReadyCallbacks: Array<Function> = [];
+
     public constructor() {
         super();
 
@@ -84,6 +86,11 @@ export class GTextField extends GObject {
         this._realFont = font;
         this.updateFont();
         this.updateFontSize();
+
+        for(let i=this._onReadyCallbacks.length-1; i>=0; --i) {
+            this._onReadyCallbacks[i]();
+            this._onReadyCallbacks.splice(i, 1);
+        }
     }
 
     public set font(value: string | null) {
@@ -641,5 +648,43 @@ export class GTextField extends GObject {
         var str: string = buffer.readS();
         if (str != null)
             this.text = str;
+    }
+
+    public copyFrom(tf: GTextField): void {
+        super.copyFrom(tf);
+
+        const callback = () => {
+            this.font = tf.font;
+            this.fontSize = tf.fontSize;
+            this.align = tf.align;
+            this.verticalAlign = tf.verticalAlign;
+            this.leading = tf.leading;
+            this.letterSpacing = tf.letterSpacing;
+            this.ubbEnabled = tf.ubbEnabled;
+            this.autoSize = tf.autoSize;
+            this.underline = tf.underline;
+            this.italic = tf.italic;
+            this.bold = tf.bold;
+            this.singleLine = tf.singleLine;
+            this.stroke = tf.stroke;
+            this.color = tf.color;
+            if(tf.strokeColor) {
+                this.strokeColor = tf.strokeColor;
+            }
+            if(tf.shadowColor) {
+                this.shadowColor = tf.shadowColor;
+                this.shadowOffset = tf.shadowOffset;
+            }     
+            if(tf._templateVars) {
+                this._templateVars = {};
+                Object.assign(this._templateVars, tf._templateVars);
+            }   
+        };
+
+        if(tf._realFont) {
+            callback();
+        }else{
+            this._onReadyCallbacks.push(callback);
+        }
     }
 }

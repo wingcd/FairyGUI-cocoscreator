@@ -6,6 +6,8 @@ import { ByteBuffer } from "./utils/ByteBuffer";
 var _nextPageId: number = 0;
 
 export class Controller extends EventTarget {
+    public index = 0;
+
     private _selectedIndex: number;
     private _previousIndex: number;
     private _pageIds: Array<string>;
@@ -295,6 +297,29 @@ export class Controller extends EventTarget {
             this._actions = new Array<ControllerAction>();
         
         this._actions.push(action);
+    }
+
+    copyFrom(source: Controller): void {
+        this.name = source.name;
+        this.index = source.index;
+        this._pageIds = source._pageIds.concat();
+        this._pageNames = source._pageNames.concat();
+        this._selectedIndex = source._selectedIndex;
+        this._previousIndex = source._previousIndex;
+        if(source._actions) {
+            for(let i: number = 0; i < source._actions.length; i++) {
+                let action: ControllerAction = source._actions[i];
+                let newAction: ControllerAction = new (action.constructor as any)();
+                newAction.copyFrom(action);
+                this.addAction(newAction);
+            }
+        }
+    }
+
+    clone(): Controller {
+        let ctrl = new Controller();
+        ctrl.copyFrom(this);
+        return ctrl;
     }
 }
 

@@ -32,4 +32,14 @@ export class GearIcon extends GearBase {
     public updateState(): void {
         this._storage[this._controller.selectedPageId] = this._owner.icon;
     }
+
+    public copyFrom(gg: GearIcon): void {
+        super.copyFrom(gg);
+        
+        this._default = gg._default;
+        var data: any = gg._storage;
+        for (var i in data) {
+            this._storage[i] = data[i];
+        }        
+    }
 }

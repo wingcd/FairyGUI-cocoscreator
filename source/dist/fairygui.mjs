@@ -1,5 +1,122 @@
-import { gfx, UIRenderer, Event as Event$1, Vec2, Node, game, director, macro, Color, Layers, Font, resources, Vec3, Rect, UITransform, UIOpacity, Component, Graphics, misc, Sprite, isValid, Size, screen, view, assetManager, ImageAsset, AudioClip, BufferAsset, AssetManager, Asset, Texture2D, SpriteFrame, BitmapFont, sp, dragonBones, path, Label, LabelOutline, LabelShadow, InstanceMaterialType, SpriteAtlas, RichText, sys, EventMouse, EventTarget, Mask, math, View, AudioSourceComponent, EditBox, Overflow } from 'cc';
+import { gfx, UIRenderer, Event as Event$1, Vec2, Color, Node, game, director, macro, Layers, Font, resources, Vec3, Rect, UITransform, UIOpacity, Component, Graphics, misc, Sprite, isValid, Size, screen, view, assetManager, ImageAsset, AudioClip, BufferAsset, AssetManager, Asset, Texture2D, SpriteFrame, BitmapFont, sp, dragonBones, path, Label, LabelOutline, LabelShadow, InstanceMaterialType, SpriteAtlas, RichText, sys, EventMouse, EventTarget, Mask, math, View, AudioSourceComponent, EditBox, Overflow } from 'cc';
 import { EDITOR } from 'cc/env';
+
+var BlendMode;
+(function (BlendMode) {
+    BlendMode[BlendMode["Normal"] = 0] = "Normal";
+    BlendMode[BlendMode["None"] = 1] = "None";
+    BlendMode[BlendMode["Add"] = 2] = "Add";
+    BlendMode[BlendMode["Multiply"] = 3] = "Multiply";
+    BlendMode[BlendMode["Screen"] = 4] = "Screen";
+    BlendMode[BlendMode["Erase"] = 5] = "Erase";
+    BlendMode[BlendMode["Mask"] = 6] = "Mask";
+    BlendMode[BlendMode["Below"] = 7] = "Below";
+    BlendMode[BlendMode["Off"] = 8] = "Off";
+    BlendMode[BlendMode["Custom1"] = 9] = "Custom1";
+    BlendMode[BlendMode["Custom2"] = 10] = "Custom2";
+    BlendMode[BlendMode["Custom3"] = 11] = "Custom3";
+})(BlendMode || (BlendMode = {}));
+class BlendModeUtils {
+    static apply(node, blendMode) {
+        let f = factors[blendMode];
+        let renderers = node.getComponentsInChildren(UIRenderer);
+        renderers.forEach(element => {
+            element.srcBlendFactor = f[0];
+            element.dstBlendFactor = f[1];
+        });
+    }
+    static override(blendMode, srcFactor, dstFactor) {
+        factors[blendMode][0] = srcFactor;
+        factors[blendMode][1] = dstFactor;
+    }
+}
+const factors = [
+    [gfx.BlendFactor.SRC_ALPHA, gfx.BlendFactor.ONE_MINUS_SRC_ALPHA],
+    [gfx.BlendFactor.ONE, gfx.BlendFactor.ONE],
+    [gfx.BlendFactor.SRC_ALPHA, gfx.BlendFactor.ONE],
+    [gfx.BlendFactor.DST_COLOR, gfx.BlendFactor.ONE_MINUS_SRC_ALPHA],
+    [gfx.BlendFactor.ONE, gfx.BlendFactor.ONE_MINUS_SRC_COLOR],
+    [gfx.BlendFactor.ZERO, gfx.BlendFactor.ONE_MINUS_SRC_ALPHA],
+    [gfx.BlendFactor.ZERO, gfx.BlendFactor.SRC_ALPHA],
+    [gfx.BlendFactor.ONE_MINUS_DST_ALPHA, gfx.BlendFactor.DST_ALPHA],
+    [gfx.BlendFactor.ONE, gfx.BlendFactor.ZERO],
+    [gfx.BlendFactor.SRC_ALPHA, gfx.BlendFactor.ONE_MINUS_SRC_ALPHA],
+    [gfx.BlendFactor.SRC_ALPHA, gfx.BlendFactor.ONE_MINUS_SRC_ALPHA],
+    [gfx.BlendFactor.SRC_ALPHA, gfx.BlendFactor.ONE_MINUS_SRC_ALPHA], //custom2
+];
+
+var Decls$1 = {};
+var constructingDepth = { n: 0 };
+
+class Event extends Event$1 {
+    constructor(type, bubbles) {
+        super(type, bubbles);
+        this.pos = new Vec2();
+        this.touchId = 0;
+        this.clickCount = 0;
+        this.button = 0;
+        this.keyModifiers = 0;
+        this.mouseWheelDelta = 0;
+    }
+    get sender() {
+        return Decls$1.GObject.cast(this.currentTarget);
+    }
+    get isShiftDown() {
+        return false;
+    }
+    get isCtrlDown() {
+        return false;
+    }
+    captureTouch() {
+        let obj = Decls$1.GObject.cast(this.currentTarget);
+        if (obj)
+            this._processor.addTouchMonitor(this.touchId, obj);
+    }
+}
+Event.TOUCH_BEGIN = "fui_touch_begin";
+Event.TOUCH_MOVE = "fui_touch_move";
+Event.TOUCH_END = "fui_touch_end";
+Event.CLICK = "fui_click";
+Event.ROLL_OVER = "fui_roll_over";
+Event.ROLL_OUT = "fui_roll_out";
+Event.MOUSE_WHEEL = "fui_mouse_wheel";
+Event.DISPLAY = "fui_display";
+Event.UNDISPLAY = "fui_undisplay";
+Event.GEAR_STOP = "fui_gear_stop";
+Event.LINK = "fui_text_link";
+Event.Submit = "editing-return";
+Event.TEXT_CHANGE = "text-changed";
+Event.STATUS_CHANGED = "fui_status_changed";
+Event.XY_CHANGED = "fui_xy_changed";
+Event.SIZE_CHANGED = "fui_size_changed";
+Event.SIZE_DELAY_CHANGE = "fui_size_delay_change";
+Event.DRAG_START = "fui_drag_start";
+Event.DRAG_MOVE = "fui_drag_move";
+Event.DRAG_END = "fui_drag_end";
+Event.DROP = "fui_drop";
+Event.SCROLL = "fui_scroll";
+Event.SCROLL_END = "fui_scroll_end";
+Event.PULL_DOWN_RELEASE = "fui_pull_down_release";
+Event.PULL_UP_RELEASE = "fui_pull_up_release";
+Event.CLICK_ITEM = "fui_click_item";
+var eventPool = new Array();
+function borrowEvent(type, bubbles) {
+    let evt;
+    if (eventPool.length) {
+        evt = eventPool.pop();
+        evt.type = type;
+        evt.bubbles = bubbles;
+    }
+    else {
+        evt = new Event(type, bubbles);
+    }
+    return evt;
+}
+function returnEvent(evt) {
+    evt.initiator = null;
+    evt.unuse();
+    eventPool.push(evt);
+}
 
 var ButtonMode;
 (function (ButtonMode) {
@@ -195,120 +312,6 @@ var ObjectPropID;
     ObjectPropID[ObjectPropID["Selected"] = 9] = "Selected";
 })(ObjectPropID || (ObjectPropID = {}));
 
-var BlendMode;
-(function (BlendMode) {
-    BlendMode[BlendMode["Normal"] = 0] = "Normal";
-    BlendMode[BlendMode["None"] = 1] = "None";
-    BlendMode[BlendMode["Add"] = 2] = "Add";
-    BlendMode[BlendMode["Multiply"] = 3] = "Multiply";
-    BlendMode[BlendMode["Screen"] = 4] = "Screen";
-    BlendMode[BlendMode["Erase"] = 5] = "Erase";
-    BlendMode[BlendMode["Mask"] = 6] = "Mask";
-    BlendMode[BlendMode["Below"] = 7] = "Below";
-    BlendMode[BlendMode["Off"] = 8] = "Off";
-    BlendMode[BlendMode["Custom1"] = 9] = "Custom1";
-    BlendMode[BlendMode["Custom2"] = 10] = "Custom2";
-    BlendMode[BlendMode["Custom3"] = 11] = "Custom3";
-})(BlendMode || (BlendMode = {}));
-class BlendModeUtils {
-    static apply(node, blendMode) {
-        let f = factors[blendMode];
-        let renderers = node.getComponentsInChildren(UIRenderer);
-        renderers.forEach(element => {
-            element.srcBlendFactor = f[0];
-            element.dstBlendFactor = f[1];
-        });
-    }
-    static override(blendMode, srcFactor, dstFactor) {
-        factors[blendMode][0] = srcFactor;
-        factors[blendMode][1] = dstFactor;
-    }
-}
-const factors = [
-    [gfx.BlendFactor.SRC_ALPHA, gfx.BlendFactor.ONE_MINUS_SRC_ALPHA],
-    [gfx.BlendFactor.ONE, gfx.BlendFactor.ONE],
-    [gfx.BlendFactor.SRC_ALPHA, gfx.BlendFactor.ONE],
-    [gfx.BlendFactor.DST_COLOR, gfx.BlendFactor.ONE_MINUS_SRC_ALPHA],
-    [gfx.BlendFactor.ONE, gfx.BlendFactor.ONE_MINUS_SRC_COLOR],
-    [gfx.BlendFactor.ZERO, gfx.BlendFactor.ONE_MINUS_SRC_ALPHA],
-    [gfx.BlendFactor.ZERO, gfx.BlendFactor.SRC_ALPHA],
-    [gfx.BlendFactor.ONE_MINUS_DST_ALPHA, gfx.BlendFactor.DST_ALPHA],
-    [gfx.BlendFactor.ONE, gfx.BlendFactor.ZERO],
-    [gfx.BlendFactor.SRC_ALPHA, gfx.BlendFactor.ONE_MINUS_SRC_ALPHA],
-    [gfx.BlendFactor.SRC_ALPHA, gfx.BlendFactor.ONE_MINUS_SRC_ALPHA],
-    [gfx.BlendFactor.SRC_ALPHA, gfx.BlendFactor.ONE_MINUS_SRC_ALPHA], //custom2
-];
-
-class Event extends Event$1 {
-    constructor(type, bubbles) {
-        super(type, bubbles);
-        this.pos = new Vec2();
-        this.touchId = 0;
-        this.clickCount = 0;
-        this.button = 0;
-        this.keyModifiers = 0;
-        this.mouseWheelDelta = 0;
-    }
-    get sender() {
-        return GObject.cast(this.currentTarget);
-    }
-    get isShiftDown() {
-        return false;
-    }
-    get isCtrlDown() {
-        return false;
-    }
-    captureTouch() {
-        let obj = GObject.cast(this.currentTarget);
-        if (obj)
-            this._processor.addTouchMonitor(this.touchId, obj);
-    }
-}
-Event.TOUCH_BEGIN = "fui_touch_begin";
-Event.TOUCH_MOVE = "fui_touch_move";
-Event.TOUCH_END = "fui_touch_end";
-Event.CLICK = "fui_click";
-Event.ROLL_OVER = "fui_roll_over";
-Event.ROLL_OUT = "fui_roll_out";
-Event.MOUSE_WHEEL = "fui_mouse_wheel";
-Event.DISPLAY = "fui_display";
-Event.UNDISPLAY = "fui_undisplay";
-Event.GEAR_STOP = "fui_gear_stop";
-Event.LINK = "fui_text_link";
-Event.Submit = "editing-return";
-Event.TEXT_CHANGE = "text-changed";
-Event.STATUS_CHANGED = "fui_status_changed";
-Event.XY_CHANGED = "fui_xy_changed";
-Event.SIZE_CHANGED = "fui_size_changed";
-Event.SIZE_DELAY_CHANGE = "fui_size_delay_change";
-Event.DRAG_START = "fui_drag_start";
-Event.DRAG_MOVE = "fui_drag_move";
-Event.DRAG_END = "fui_drag_end";
-Event.DROP = "fui_drop";
-Event.SCROLL = "fui_scroll";
-Event.SCROLL_END = "fui_scroll_end";
-Event.PULL_DOWN_RELEASE = "fui_pull_down_release";
-Event.PULL_UP_RELEASE = "fui_pull_up_release";
-Event.CLICK_ITEM = "fui_click_item";
-var eventPool = new Array();
-function borrowEvent(type, bubbles) {
-    let evt;
-    if (eventPool.length) {
-        evt = eventPool.pop();
-        evt.type = type;
-        evt.bubbles = bubbles;
-    }
-    else {
-        evt = new Event(type, bubbles);
-    }
-    return evt;
-}
-function returnEvent(evt) {
-    evt.initiator = null;
-    evt.unuse();
-    eventPool.push(evt);
-}
-
 var EaseType;
 (function (EaseType) {
     EaseType[EaseType["Linear"] = 0] = "Linear";
@@ -371,7 +374,8 @@ class GearBase {
         return this._tweenConfig && this._tweenConfig.tween && constructingDepth.n == 0 && !GearBase.disableAllTweenEffect;
     }
     setup(buffer) {
-        this._controller = this._owner.parent.getControllerAt(buffer.readShort());
+        this._controllerIndex = buffer.readShort();
+        this._controller = this._owner.parent.getControllerAt(this._controllerIndex);
         this.init();
         var i;
         var page;
@@ -423,6 +427,22 @@ class GearBase {
     }
     updateState() {
     }
+    copyFrom(source) {
+        var _a;
+        if (source._tweenConfig) {
+            if (!this._tweenConfig)
+                this._tweenConfig = new GearTweenConfig();
+            this._tweenConfig.copyFrom(source._tweenConfig);
+        }
+        if ((_a = this._owner) === null || _a === void 0 ? void 0 : _a.parent) {
+            this._controller = this._owner.parent.getControllerAt(source._controllerIndex);
+        }
+        if ("positionsInPercent" in source) {
+            //@ts-ignore
+            this["positionsInPercent"] = source["positionsInPercent"];
+        }
+        this.init();
+    }
 }
 class GearTweenConfig {
     constructor() {
@@ -430,6 +450,12 @@ class GearTweenConfig {
         this.easeType = EaseType.QuadOut;
         this.duration = 0.3;
         this.delay = 0;
+    }
+    copyFrom(source) {
+        this.tween = source.tween;
+        this.easeType = source.easeType;
+        this.duration = source.duration;
+        this.delay = source.delay;
     }
 }
 
@@ -468,6 +494,11 @@ class GearAnimation extends GearBase {
         gv.playing = this._owner.getProp(ObjectPropID.Playing);
         gv.frame = this._owner.getProp(ObjectPropID.Frame);
     }
+    copyFrom(gg) {
+        super.copyFrom(gg);
+        this._default.playing = gg._default.playing;
+        this._default.frame = gg._default.frame;
+    }
 }
 
 class GearColor extends GearBase {
@@ -505,6 +536,17 @@ class GearColor extends GearBase {
         gv.color = this._owner.getProp(ObjectPropID.Color);
         gv.strokeColor = this._owner.getProp(ObjectPropID.OutlineColor);
     }
+    copyFrom(gg) {
+        super.copyFrom(gg);
+        if (gg._default.color) {
+            this._default.color = new Color();
+            this._default.color.set(gg._default.color);
+        }
+        if (gg._default.strokeColor) {
+            this._default.strokeColor = new Color();
+            this._default.strokeColor.set(gg._default.strokeColor);
+        }
+    }
 }
 
 class GearDisplay extends GearBase {
@@ -538,6 +580,10 @@ class GearDisplay extends GearBase {
         else
             this._visible = 0;
     }
+    copyFrom(gg) {
+        super.copyFrom(gg);
+        this.pages = gg.pages.concat();
+    }
 }
 
 class GearDisplay2 extends GearBase {
@@ -564,6 +610,11 @@ class GearDisplay2 extends GearBase {
         else
             v = v || connected;
         return v;
+    }
+    copyFrom(gg) {
+        super.copyFrom(gg);
+        this.pages = gg.pages.concat();
+        this.condition = gg.condition;
     }
 }
 
@@ -594,6 +645,14 @@ class GearFontSize extends GearBase {
     updateState() {
         this._storage[this._controller.selectedPageId] = this._owner.getProp(ObjectPropID.FontSize);
     }
+    copyFrom(gg) {
+        super.copyFrom(gg);
+        this._default = gg._default;
+        var data = gg._storage;
+        for (var i in data) {
+            this._storage[i] = data[i];
+        }
+    }
 }
 
 class GearIcon extends GearBase {
@@ -618,6 +677,14 @@ class GearIcon extends GearBase {
     }
     updateState() {
         this._storage[this._controller.selectedPageId] = this._owner.icon;
+    }
+    copyFrom(gg) {
+        super.copyFrom(gg);
+        this._default = gg._default;
+        var data = gg._storage;
+        for (var i in data) {
+            this._storage[i] = data[i];
+        }
     }
 }
 
@@ -1534,6 +1601,23 @@ class GearLook extends GearBase {
         gv.grayed = this._owner.grayed;
         gv.touchable = this._owner.touchable;
     }
+    copyFrom(gg) {
+        super.copyFrom(gg);
+        this._default.alpha = gg._default.alpha;
+        this._default.rotation = gg._default.rotation;
+        this._default.grayed = gg._default.grayed;
+        this._default.touchable = gg._default.touchable;
+        var data = gg._storage;
+        for (var i in data) {
+            var gv = data[i];
+            var ret = {};
+            ret.alpha = gv.alpha;
+            ret.rotation = gv.rotation;
+            ret.grayed = gv.grayed;
+            ret.touchable = gv.touchable;
+            this._storage[i] = ret;
+        }
+    }
 }
 
 class GearSize extends GearBase {
@@ -1631,6 +1715,23 @@ class GearSize extends GearBase {
         this._default.height += dy;
         this.updateState();
     }
+    copyFrom(gg) {
+        super.copyFrom(gg);
+        this._default.width = gg._default.width;
+        this._default.height = gg._default.height;
+        this._default.scaleX = gg._default.scaleX;
+        this._default.scaleY = gg._default.scaleY;
+        var data = gg._storage;
+        for (var i in data) {
+            var gv = data[i];
+            var ret = {};
+            ret.width = gv.width;
+            ret.height = gv.height;
+            ret.scaleX = gv.scaleX;
+            ret.scaleY = gv.scaleY;
+            this._storage[i] = ret;
+        }
+    }
 }
 
 class GearText extends GearBase {
@@ -1655,6 +1756,14 @@ class GearText extends GearBase {
     }
     updateState() {
         this._storage[this._controller.selectedPageId] = this._owner.text;
+    }
+    copyFrom(gg) {
+        super.copyFrom(gg);
+        this._default = gg._default;
+        var data = gg._storage;
+        for (var i in data) {
+            this._storage[i] = data[i];
+        }
     }
 }
 
@@ -1762,6 +1871,24 @@ class GearXY extends GearBase {
         this._default.x += dx;
         this._default.y += dy;
         this.updateState();
+    }
+    copyFrom(gg) {
+        super.copyFrom(gg);
+        this.positionsInPercent = gg.positionsInPercent;
+        var data = gg._storage;
+        for (var i in data) {
+            var pt = data[i];
+            var ret = {};
+            ret.x = pt.x;
+            ret.y = pt.y;
+            ret.px = pt.px;
+            ret.py = pt.py;
+            this._storage[i] = ret;
+        }
+        this._default.x = gg._default.x;
+        this._default.y = gg._default.y;
+        this._default.px = gg._default.px;
+        this._default.py = gg._default.py;
     }
 }
 
@@ -2540,6 +2667,9 @@ class GObject {
         this._blendMode = BlendMode.Normal;
         this._partner = this._node.addComponent(GObjectPartner);
     }
+    get objectType() {
+        return "GObject";
+    }
     get id() {
         return this._id;
     }
@@ -2569,7 +2699,8 @@ class GObject {
             this._x = xv;
             this._y = yv;
             this.handlePositionChanged();
-            if (this instanceof GGroup)
+            if (this.objectType == "GGroup")
+                //@ts-ignore
                 this.moveChildren(dx, dy);
             this.updateGear(1);
             if (this._parent && !("setVirtual" in this._parent) /*not list*/) {
@@ -2660,7 +2791,8 @@ class GObject {
                 this.setPosition(this.x - this._uiTrans.anchorX * dWidth, this.y - (1 - this._uiTrans.anchorY) * dHeight);
             else
                 this.handlePositionChanged();
-            if (this instanceof GGroup)
+            if (this.objectType == "GGroup")
+                //@ts-ignore
                 this.resizeChildren(dWidth, dHeight);
             this.updateGear(2);
             if (this._parent) {
@@ -2772,7 +2904,8 @@ class GObject {
         if (this._alpha != value) {
             this._alpha = value;
             this._uiOpacity.opacity = this._alpha * 255;
-            if (this instanceof GGroup)
+            if (this.objectType == "GGroup")
+                //@ts-ignore
                 this.handleAlphaChanged();
             this.updateGear(3);
         }
@@ -3135,7 +3268,7 @@ class GObject {
     }
     handleVisibleChanged() {
         this._node.active = this._finalVisible;
-        if (this instanceof GGroup)
+        if (this.objectType == "GGroup")
             this.handleVisibleChanged();
         if (this._parent)
             this._parent.setBoundsChangedFlag();
@@ -3370,6 +3503,48 @@ class GObject {
             this._node.emit(Event.DRAG_END, evt);
         }
     }
+    clone() {
+        let obj = new this.constructor();
+        obj.copyFrom(this);
+        return obj;
+    }
+    copyFrom(source) {
+        this.beforeCopy(source);
+        if (!this._underConstruct) {
+            this.afterCopy(source);
+        }
+    }
+    beforeCopy(source) {
+        this.name = source.name;
+        this._node.name = source._node.name;
+        this._id = source._id;
+        this.packageItem = source.packageItem;
+        this.setSize(source._rawWidth, source._rawHeight, true);
+        this.setPivot(source._uiTrans.anchorX, source._uiTrans.anchorY, source._pivotAsAnchor);
+        this.setPosition(source._x, source._y);
+        this.setScale(source._node.scale.x, source._node.scale.y);
+        this.rotation = source.rotation;
+        this.alpha = source.alpha;
+        this.visible = source.visible;
+        this.grayed = source.grayed;
+        this.touchable = source.touchable;
+        this._blendMode = source._blendMode;
+        if (source._dragBounds) {
+            if (!this._dragBounds)
+                this._dragBounds = new Rect();
+            this._dragBounds.set(source._dragBounds);
+        }
+        this._dragTesting = false;
+        this.data = source.data;
+        this._relations.copyFrom(source._relations);
+    }
+    afterCopy(source) {
+        for (var i = 0; i < 10; i++) {
+            var gear = source._gears[i];
+            if (gear)
+                this.getGear(i).copyFrom(gear);
+        }
+    }
 }
 //-------------------------------------------------------------------
 class GObjectPartner extends Component {
@@ -3397,6 +3572,7 @@ class GObjectPartner extends Component {
         this.node["$gobj"].onDestroy();
     }
 }
+Decls$1.GObject = GObject;
 //-------------------------------------------------------------------
 let GearClasses = [
     GearDisplay, GearXY, GearSize, GearLook, GearColor,
@@ -3414,10 +3590,11 @@ var sGlobalDragStart = new Vec2();
 var sGlobalRect = new Rect();
 var s_dragging;
 var s_dragQuery;
-var Decls$1 = {};
-var constructingDepth = { n: 0 };
 
 class GGroup extends GObject {
+    get objectType() {
+        return "GGroup";
+    }
     constructor() {
         super();
         this._layout = 0;
@@ -3789,6 +3966,17 @@ class GGroup extends GObject {
         if (!this.visible)
             this.handleVisibleChanged();
     }
+    copyFrom(source) {
+        super.copyFrom(source);
+        var g = (source);
+        this._layout = g._layout;
+        this._lineGap = g._lineGap;
+        this._columnGap = g._columnGap;
+        this._excludeInvisibles = g._excludeInvisibles;
+        this._autoSizeDisabled = g._autoSizeDisabled;
+        this._mainGridIndex = g._mainGridIndex;
+        this._mainGridMinSize = g._mainGridMinSize;
+    }
 }
 
 class GGraph extends GObject {
@@ -4012,6 +4200,22 @@ class GGraph extends GObject {
             this.updateGraph();
         }
     }
+    copyFrom(graph) {
+        super.copyFrom(graph);
+        this._type = graph._type;
+        this._lineSize = graph._lineSize;
+        this._lineColor.set(graph._lineColor);
+        this._fillColor.set(graph._fillColor);
+        if (graph._cornerRadius)
+            this._cornerRadius = graph._cornerRadius.slice();
+        this._sides = graph._sides;
+        this._startAngle = graph._startAngle;
+        if (graph._polygonPoints)
+            this._polygonPoints = graph._polygonPoints.slice();
+        if (graph._distances)
+            this._distances = graph._distances.slice();
+        this.updateGraph();
+    }
 }
 
 class Image extends Sprite {
@@ -4147,6 +4351,7 @@ class Image extends Sprite {
 class GImage extends GObject {
     constructor() {
         super();
+        this._onReadyCallbacks = [];
         this._node.name = "GImage";
         this._touchDisabled = true;
         this._content = this._node.addComponent(Image);
@@ -4201,6 +4406,10 @@ class GImage extends GObject {
         if (this.onReady) {
             this.onReady();
             this.onReady = null;
+            for (let i = this._onReadyCallbacks.length - 1; i >= 0; i--) {
+                this._onReadyCallbacks[i]();
+                this._onReadyCallbacks.splice(i, 1);
+            }
         }
     }
     constructFromResource() {
@@ -4258,6 +4467,24 @@ class GImage extends GObject {
             this._content.fillOrigin = buffer.readByte();
             this._content.fillClockwise = buffer.readBool();
             this._content.fillAmount = buffer.readFloat();
+        }
+    }
+    copyFrom(image) {
+        super.copyFrom(image);
+        this.color.set(image.color);
+        this.flip = image.flip;
+        this.fillMethod = image.fillMethod;
+        this.fillOrigin = image.fillOrigin;
+        this.fillClockwise = image.fillClockwise;
+        this.fillAmount = image.fillAmount;
+        let callback = () => {
+            this.init(image._contentPackageItem);
+        };
+        if (!image._content.spriteFrame) {
+            image._onReadyCallbacks.push(callback);
+        }
+        else {
+            callback();
         }
     }
 }
@@ -6349,6 +6576,7 @@ class GTextField extends GObject {
         this._fontSize = 0;
         this._leading = 0;
         this._dirtyVersion = 0;
+        this._onReadyCallbacks = [];
         this._node.name = "GTextField";
         this._touchDisabled = true;
         this._text = "";
@@ -6388,6 +6616,10 @@ class GTextField extends GObject {
         this._realFont = font;
         this.updateFont();
         this.updateFontSize();
+        for (let i = this._onReadyCallbacks.length - 1; i >= 0; --i) {
+            this._onReadyCallbacks[i]();
+            this._onReadyCallbacks.splice(i, 1);
+        }
     }
     set font(value) {
         if (this._font != value || !value) {
@@ -6860,6 +7092,42 @@ class GTextField extends GObject {
         var str = buffer.readS();
         if (str != null)
             this.text = str;
+    }
+    copyFrom(tf) {
+        super.copyFrom(tf);
+        const callback = () => {
+            this.font = tf.font;
+            this.fontSize = tf.fontSize;
+            this.align = tf.align;
+            this.verticalAlign = tf.verticalAlign;
+            this.leading = tf.leading;
+            this.letterSpacing = tf.letterSpacing;
+            this.ubbEnabled = tf.ubbEnabled;
+            this.autoSize = tf.autoSize;
+            this.underline = tf.underline;
+            this.italic = tf.italic;
+            this.bold = tf.bold;
+            this.singleLine = tf.singleLine;
+            this.stroke = tf.stroke;
+            this.color = tf.color;
+            if (tf.strokeColor) {
+                this.strokeColor = tf.strokeColor;
+            }
+            if (tf.shadowColor) {
+                this.shadowColor = tf.shadowColor;
+                this.shadowOffset = tf.shadowOffset;
+            }
+            if (tf._templateVars) {
+                this._templateVars = {};
+                Object.assign(this._templateVars, tf._templateVars);
+            }
+        };
+        if (tf._realFont) {
+            callback();
+        }
+        else {
+            this._onReadyCallbacks.push(callback);
+        }
     }
 }
 
@@ -7465,6 +7733,10 @@ class ControllerAction {
         for (i = 0; i < cnt; i++)
             this.toPage[i] = buffer.readS();
     }
+    copyFrom(source) {
+        this.fromPage = source.fromPage.slice();
+        this.toPage = source.toPage.slice();
+    }
 }
 
 class PlayTransitionAction extends ControllerAction {
@@ -7495,6 +7767,14 @@ class PlayTransitionAction extends ControllerAction {
         this.playTimes = buffer.readInt();
         this.delay = buffer.readFloat();
         this.stopOnExit = buffer.readBool();
+    }
+    copyFrom(source) {
+        super.copyFrom(source);
+        var action = (source);
+        this.transitionName = action.transitionName;
+        this.playTimes = action.playTimes;
+        this.delay = action.delay;
+        this.stopOnExit = action.stopOnExit;
     }
 }
 
@@ -7530,12 +7810,20 @@ class ChangePageAction extends ControllerAction {
         this.controllerName = buffer.readS();
         this.targetPage = buffer.readS();
     }
+    copyFrom(source) {
+        super.copyFrom(source);
+        var action = (source);
+        this.objectId = action.objectId;
+        this.controllerName = action.controllerName;
+        this.targetPage = action.targetPage;
+    }
 }
 
 var _nextPageId = 0;
 class Controller extends EventTarget {
     constructor() {
         super();
+        this.index = 0;
         this._pageIds = [];
         this._pageNames = [];
         this._selectedIndex = -1;
@@ -7763,6 +8051,27 @@ class Controller extends EventTarget {
         if (!this._actions)
             this._actions = new Array();
         this._actions.push(action);
+    }
+    copyFrom(source) {
+        this.name = source.name;
+        this.index = source.index;
+        this._pageIds = source._pageIds.concat();
+        this._pageNames = source._pageNames.concat();
+        this._selectedIndex = source._selectedIndex;
+        this._previousIndex = source._previousIndex;
+        if (source._actions) {
+            for (let i = 0; i < source._actions.length; i++) {
+                let action = source._actions[i];
+                let newAction = new action.constructor();
+                newAction.copyFrom(action);
+                this.addAction(newAction);
+            }
+        }
+    }
+    clone() {
+        let ctrl = new Controller();
+        ctrl.copyFrom(this);
+        return ctrl;
     }
 }
 function createAction(type) {
@@ -11589,6 +11898,7 @@ class GComponent extends GObject {
             nextPos = buffer.readShort();
             nextPos += buffer.position;
             var controller = new Controller();
+            controller.index = i;
             this._controllers.push(controller);
             controller.parent = this;
             controller.setup(buffer);
@@ -11756,6 +12066,41 @@ class GComponent extends GObject {
         action.toPage = toPages;
         ctrl.addAction(action);
     }
+    copyFrom(source) {
+        this._underConstruct = true;
+        this._buildingDisplayList = true;
+        this.beforeCopy(source);
+        for (let i = 0; i < source._transitions.length; i++) {
+            let trans = source._transitions[i];
+            this.addTransition(trans);
+        }
+        for (let i = 0; i < source._controllers.length; i++) {
+            let cc = source._controllers[i].clone();
+            this.addController(cc);
+        }
+        for (let i = 0; i < source._children.length; i++) {
+            let g = source._children[i];
+            let newChild = new g.constructor();
+            newChild._underConstruct = true;
+            //@ts-ignore
+            newChild.copyFrom(g);
+            newChild._parent = this;
+            newChild.node.parent = this._container;
+            this._children.push(newChild);
+            //@ts-ignore
+            newChild.afterCopy(g);
+            newChild._underConstruct = false;
+        }
+        if (source._group) {
+            this._group = source._group;
+        }
+        this.afterCopy(source);
+        this.applyAllControllers();
+        this._buildingDisplayList = false;
+        this._underConstruct = false;
+        this.buildNativeDisplayList();
+        this.setBoundsChangedFlag();
+    }
 }
 var s_vec2$2 = new Vec2();
 
@@ -11827,7 +12172,7 @@ class Window extends GComponent {
         this._contentArea = value;
     }
     show() {
-        GRoot.inst.showWindow(this);
+        Decls$1.GRoot.inst.showWindow(this);
     }
     showOn(root) {
         root.showWindow(this);
@@ -11837,9 +12182,9 @@ class Window extends GComponent {
             this.doHideAnimation();
     }
     hideImmediately() {
-        var r = (this.parent instanceof GRoot) ? this.parent : null;
+        var r = (this.parent.objectType == "GRoot") ? this.parent : null;
         if (!r)
-            r = GRoot.inst;
+            r = Decls$1.GRoot.inst;
         r.hideWindowImmediately(this);
     }
     centerOn(r, restraint) {
@@ -11868,7 +12213,7 @@ class Window extends GComponent {
         this._modal = val;
     }
     bringToFront() {
-        GRoot.inst.bringToFront(this);
+        Decls$1.GRoot.inst.bringToFront(this);
     }
     showModalWait(requestingCmd) {
         if (requestingCmd != null)
@@ -11992,6 +12337,9 @@ class GRoot extends GComponent {
         director.getScene().getChildByName('Canvas').addChild(GRoot._inst.node);
         GRoot._inst.onWinResize();
         return GRoot._inst;
+    }
+    get objectType() {
+        return "GRoot";
     }
     constructor() {
         super();
@@ -12489,6 +12837,21 @@ class GTextInput extends GTextField {
             this._editBox.placeholderLabel.verticalAlign = vAlign;
         }
     }
+    copyFrom(tf) {
+        super.copyFrom(tf);
+        this.promptText = tf.promptText;
+        this.maxLength = tf.maxLength;
+        this.restrict = tf.restrict;
+        this.password = tf.password;
+        this.align = tf.align;
+        this.verticalAlign = tf.verticalAlign;
+        this.singleLine = tf.singleLine;
+        if (this._editBox.placeholderLabel) {
+            let color = tf._editBox.placeholderLabel.color;
+            color.set(tf._editBox.placeholderLabel.color);
+            this._editBox.placeholderLabel.color = color;
+        }
+    }
 }
 class MyEditBox extends EditBox {
     _registerEvent() {
@@ -12569,6 +12932,7 @@ class GLoader extends GObject {
         this._frame = 0;
         this._dirtyVersion = 0;
         this._externalAssets = {};
+        this._onReadyCallbacks = [];
         this._node.name = "GLoader";
         this._playing = true;
         this._url = "";
@@ -12796,6 +13160,10 @@ class GLoader extends GObject {
         }
         else
             this.setErrorState();
+        for (let i = this._onReadyCallbacks.length - 1; i >= 0; i--) {
+            this._onReadyCallbacks[i]();
+            this._onReadyCallbacks.splice(i, 1);
+        }
     }
     loadFromPackage(itemURL) {
         this._dirtyVersion++;
@@ -13104,6 +13472,28 @@ class GLoader extends GObject {
             this._content.fillOrigin = buffer.readByte();
             this._content.fillClockwise = buffer.readBool();
             this._content.fillAmount = buffer.readFloat();
+        }
+    }
+    copyFrom(loader) {
+        var _a;
+        super.copyFrom(loader);
+        this._align = loader._align;
+        this._verticalAlign = loader._verticalAlign;
+        this._fill = loader._fill;
+        this._shrinkOnly = loader._shrinkOnly;
+        this._autoSize = loader._autoSize;
+        this._playing = loader._playing;
+        this._frame = loader._frame;
+        let callback = () => {
+            this.url = loader.url;
+            this.color = loader.color;
+            this.init(loader._contentItem, loader._url, loader._dirtyVersion);
+        };
+        if ((_a = loader._contentItem) === null || _a === void 0 ? void 0 : _a.__loaded) {
+            callback();
+        }
+        else {
+            loader._onReadyCallbacks.push(callback);
         }
     }
 }
@@ -13695,6 +14085,19 @@ class GLabel extends GComponent {
             }
         }
     }
+    copyFrom(obj) {
+        super.copyFrom(obj);
+        this._titleObject = this.getChild("title");
+        this._iconObject = this.getChild("icon");
+        this.title = obj.title;
+        this.icon = obj.icon;
+        if (this._titleObject) {
+            let c = this.titleColor;
+            c.set(obj.titleColor);
+            this.titleColor = c;
+            this.titleFontSize = obj.titleFontSize;
+        }
+    }
 }
 
 class GButton extends GComponent {
@@ -14037,8 +14440,10 @@ class GButton extends GComponent {
         if (iv != 0)
             this.titleFontSize = iv;
         iv = buffer.readShort();
-        if (iv >= 0)
+        if (iv >= 0) {
             this._relatedController = this.parent.getControllerAt(iv);
+            this._relatedController.index = iv;
+        }
         this._relatedPageId = buffer.readS();
         str = buffer.readS();
         if (str != null)
@@ -14134,6 +14539,28 @@ class GButton extends GComponent {
         else {
             if (this._relatedController)
                 this._relatedController.selectedPageId = this._relatedPageId;
+        }
+    }
+    copyFrom(source) {
+        super.copyFrom(source);
+        if (!(source instanceof GButton))
+            return;
+        this._mode = source._mode;
+        this._sound = source._sound;
+        this._soundVolumeScale = source._soundVolumeScale;
+        this._downEffect = source._downEffect;
+        this._downEffectValue = source._downEffectValue;
+        if (source._downColor) {
+            this._downColor = new Color();
+            this._downColor.set(source._downColor);
+        }
+        this._downScaled = source._downScaled;
+        if (source._buttonController) {
+            this._buttonController = this.getController("button");
+        }
+        if (source._relatedController) {
+            this._relatedController = this._parent.getControllerAt(source._relatedController.index);
+            this._relatedPageId = source._relatedPageId;
         }
     }
 }
@@ -16495,8 +16922,10 @@ class GComboBox extends GComponent {
             this._visibleItemCount = iv;
         this._popupDirection = buffer.readByte();
         iv = buffer.readShort();
-        if (iv >= 0)
+        if (iv >= 0) {
             this._selectionController = this.parent.getControllerAt(iv);
+            this._selectionController.index = iv;
+        }
     }
     showDropdown() {
         if (this._itemsUpdated) {
@@ -16572,6 +17001,45 @@ class GComboBox extends GComponent {
                     this.setState(GButton.UP);
             }
         }
+    }
+    copyFrom(source) {
+        super.copyFrom(source);
+        let c = (source);
+        this._items = c._items.concat();
+        this._values = c._values.concat();
+        this._icons = c._icons.concat();
+        this._selectedIndex = c._selectedIndex;
+        this._visibleItemCount = c._visibleItemCount;
+        this._popupDirection = c._popupDirection;
+        this._itemsUpdated = true;
+        if (c._selectionController) {
+            this._selectionController = this._parent.getControllerAt(c._selectionController.index);
+        }
+        if (c._titleObject) {
+            c._titleObject = this.getChild("title");
+        }
+        if (c._iconObject) {
+            c._iconObject = this.getChild("icon");
+        }
+        if (c.dropdown) {
+            this.dropdown = c.dropdown.clone();
+            this.dropdown.name = "this.dropdown";
+            this._list = this.dropdown.getChild("list", GList);
+            if (this._list == null) {
+                console.error(this.resourceURL + ": 下拉框的弹出元件里必须包含名为list的列表");
+                return;
+            }
+            this._list.on(Event.CLICK_ITEM, this.onClickItem, this);
+            this._list.addRelation(this.dropdown, RelationType.Width);
+            this._list.removeRelation(this.dropdown, RelationType.Height);
+            this.dropdown.addRelation(this._list, RelationType.Height);
+            this.dropdown.removeRelation(this._list, RelationType.Width);
+            this.dropdown.on(Event.UNDISPLAY, this.onPopupClosed, this);
+        }
+        this._node.on(Event.TOUCH_BEGIN, this.onTouchBegin_1, this);
+        this._node.on(Event.TOUCH_END, this.onTouchEnd_1, this);
+        this._node.on(Event.ROLL_OVER, this.onRollOver_1, this);
+        this._node.on(Event.ROLL_OUT, this.onRollOut_1, this);
     }
 }
 

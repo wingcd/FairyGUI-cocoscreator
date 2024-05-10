@@ -129,7 +129,7 @@
     <image id="eut94z" name="b2.png" path="/images/"/>
     <component id="t9fj50" name="ProgressBar.xml" path="/components/"/>
     <image id="t9fj51" name="p2_png.png" path="/images/" scale="9grid" scale9grid="10,4,121,4"/>
-    <image id="t9fj52" name="p3_png.png" path="/images/"/>
+    <image id="t9fj52" name="p3_png.png" path="/images/" scale="9grid" scale9grid="13,1,26,2"/>
     <component id="t9fj53" name="ProgressBar6.xml" path="/components/"/>
     <image id="t9fj54" name="k17.png" path="/images/" scale="9grid" scale9grid="27,9,54,2"/>
     <image id="t9fj55" name="k16.jpg" path="/images/" scale="9grid" scale9grid="8,5,16,2"/>
@@ -225,6 +225,7 @@
     <movieclip id="iwqq89" name="gz.jta" path="/images/"/>
     <image id="sw6l8a" name="radial.png" path="/images/" scale=""/>
     <component id="u1q78b" name="ProgressBar7.xml" path="/components/"/>
+    <component id="m0028c" name="Test.xml" path="/"/>
   </resources>
   <publish name="Basics">
     <atlas name="Default" index="0"/>

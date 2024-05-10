@@ -39,4 +39,9 @@ export class ControllerAction {
         for (i = 0; i < cnt; i++)
             this.toPage[i] = buffer.readS();
     }
+
+    public copyFrom(source: ControllerAction): void {
+        this.fromPage = source.fromPage.slice();
+        this.toPage = source.toPage.slice();
+    }
 }

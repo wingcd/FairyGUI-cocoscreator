@@ -388,8 +388,10 @@ export class GComboBox extends GComponent {
         this._popupDirection = buffer.readByte();
 
         iv = buffer.readShort();
-        if (iv >= 0)
+        if (iv >= 0) {
             this._selectionController = this.parent.getControllerAt(iv);
+            this._selectionController.index = iv;
+        }
     }
 
     protected showDropdown(): void {
@@ -483,5 +485,52 @@ export class GComboBox extends GComponent {
                     this.setState(GButton.UP);
             }
         }
+    }
+
+    public copyFrom(source: GComboBox): void {
+        super.copyFrom(source);
+
+        let c: GComboBox = <GComboBox>(source);
+        this._items = c._items.concat();
+        this._values = c._values.concat();
+        this._icons = c._icons.concat();
+        this._selectedIndex = c._selectedIndex;
+        this._visibleItemCount = c._visibleItemCount;
+        this._popupDirection = c._popupDirection;
+        this._itemsUpdated = true;
+
+        if(c._selectionController) {
+            this._selectionController = this._parent.getControllerAt(c._selectionController.index);
+        }
+        if(c._titleObject) {
+            c._titleObject = this.getChild("title");
+        }
+        if(c._iconObject) {
+            c._iconObject = this.getChild("icon");
+        }
+
+        if(c.dropdown) {
+            this.dropdown = <GComponent>c.dropdown.clone();
+            this.dropdown.name = "this.dropdown";
+            this._list = this.dropdown.getChild("list", GList);
+            if (this._list == null) {
+                console.error(this.resourceURL + ": 下拉框的弹出元件里必须包含名为list的列表");
+                return;
+            }
+            this._list.on(FUIEvent.CLICK_ITEM, this.onClickItem, this);
+
+            this._list.addRelation(this.dropdown, RelationType.Width);
+            this._list.removeRelation(this.dropdown, RelationType.Height);
+
+            this.dropdown.addRelation(this._list, RelationType.Height);
+            this.dropdown.removeRelation(this._list, RelationType.Width);
+
+            this.dropdown.on(FUIEvent.UNDISPLAY, this.onPopupClosed, this);
+        }
+
+        this._node.on(FUIEvent.TOUCH_BEGIN, this.onTouchBegin_1, this);
+        this._node.on(FUIEvent.TOUCH_END, this.onTouchEnd_1, this);
+        this._node.on(FUIEvent.ROLL_OVER, this.onRollOver_1, this);
+        this._node.on(FUIEvent.ROLL_OUT, this.onRollOut_1, this);
     }
 }
