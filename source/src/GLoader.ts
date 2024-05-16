@@ -33,7 +33,7 @@ export class GLoader extends GObject {
     private _content2?: GComponent;
     private _updatingLayout: boolean;
     private _dirtyVersion: number = 0;
-    private _externalAssets: { [path: string]: Asset } = {};
+    private _externalAssets: { [path: string]: Asset[]} = {};
 
     private static _errorSignPool: GObjectPool = new GObjectPool();
 
@@ -349,16 +349,19 @@ export class GLoader extends GObject {
             if (this.url != url || !isValid(this._node))
                 return;
 
-            if (err)
+            if (err) {
                 console.warn(err);
+                return;
+            }
 
-            this.addExternalAssetRef(this._url, asset);
+            let assets: Asset[] = [asset];
 
             if (asset instanceof SpriteFrame)
                 this.onExternalLoadSuccess(asset);
             else if (asset instanceof Texture2D) {
                 let sp = new SpriteFrame();
                 sp.texture = asset;
+                assets.push(sp);
                 this.onExternalLoadSuccess(sp);
             } else if (asset instanceof ImageAsset) {
                 let tex = new Texture2D();
@@ -373,8 +376,11 @@ export class GLoader extends GObject {
                 }
                 let sp = new SpriteFrame();
                 sp.texture = tex;
+                assets.push(tex);
+                assets.push(sp);
                 this.onExternalLoadSuccess(sp);
             }
+            this.addExternalAssetRef(this._url, assets);
         };
         if (this.url.startsWith("http://")
             || this.url.startsWith("https://")
@@ -385,29 +391,44 @@ export class GLoader extends GObject {
                 assetManager.loadRemote(this.url, callback);
             }
         } else {
-            resources.load(this.url, Asset, callback);
+            let pkg = resources;
+            let assetUrl = this.url;
+            if(this.url.startsWith("db://")) {
+                let url = this.url.substring(5);
+                let startIdx = url.indexOf("/");
+                const pkgName = url.substring(0, startIdx);
+                assetUrl = url.substring(startIdx + 1);
+                pkg = assetManager.getBundle(pkgName);
+                if(!pkg) {
+                    console.error(`bundle '${pkgName}' not found`);
+                    return;
+                }
+            }
+            pkg.load(assetUrl, Asset, callback);
         }
     }
 
-    private addExternalAssetRef(url: string, asset: Asset) {
+    private addExternalAssetRef(url: string, assets: Asset[]) {
       if (!this._externalAssets[url]) {
-          this._externalAssets[url] = asset;
-
-          asset.addRef();
+        this._externalAssets[url] = assets;
+        for (let i = 0; i < assets.length; i++) {
+            assets[i].addRef();
+        }
       }
     }
 
     protected freeExternal(): void {
-        const bundle = resources;
-
         for (const key in this._externalAssets) {
             if (!Object.prototype.hasOwnProperty.call(this._externalAssets, key)) {
                 continue;
             }
 
-            const asset = this._externalAssets[key];
-
-            asset.decRef();
+            const assets = this._externalAssets[key];
+            const asset = assets[0];
+            for(let i = 1; i < assets.length; i++) {
+                let asset = assets[i];
+                asset.decRef(UIConfig.autoReleaseAssets);
+            }
 
             if (asset.refCount <= 0 && UIConfig.autoReleaseAssets) {
                 assetManager.releaseAsset(asset);
@@ -415,9 +436,15 @@ export class GLoader extends GObject {
                 if (key.startsWith("http://")
                     || key.startsWith("https://")
                     || key.startsWith('/')) {
+
                 }
                 else {
-                    bundle.release(key + "/spriteFrame");
+                    for(let i = 1; i < assets.length; i++) {
+                        let asset = assets[i];
+                        if (asset.refCount <= 0) {
+                            assetManager.releaseAsset(asset);
+                        }
+                    }
                 }
             }
         }

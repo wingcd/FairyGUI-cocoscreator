@@ -12827,14 +12827,17 @@ class GLoader extends GObject {
             //因为是异步返回的，而这时可能url已经被改变，所以不能直接用返回的结果
             if (this.url != url || !isValid(this._node))
                 return;
-            if (err)
+            if (err) {
                 console.warn(err);
-            this.addExternalAssetRef(this._url, asset);
+                return;
+            }
+            let assets = [asset];
             if (asset instanceof SpriteFrame)
                 this.onExternalLoadSuccess(asset);
             else if (asset instanceof Texture2D) {
                 let sp = new SpriteFrame();
                 sp.texture = asset;
+                assets.push(sp);
                 this.onExternalLoadSuccess(sp);
             }
             else if (asset instanceof ImageAsset) {
@@ -12851,8 +12854,11 @@ class GLoader extends GObject {
                 }
                 let sp = new SpriteFrame();
                 sp.texture = tex;
+                assets.push(tex);
+                assets.push(sp);
                 this.onExternalLoadSuccess(sp);
             }
+            this.addExternalAssetRef(this._url, assets);
         };
         if (this.url.startsWith("http://")
             || this.url.startsWith("https://")
@@ -12865,30 +12871,53 @@ class GLoader extends GObject {
             }
         }
         else {
-            resources.load(this.url, Asset, callback);
+            let pkg = resources;
+            let assetUrl = this.url;
+            if (this.url.startsWith("db://")) {
+                let url = this.url.substring(5);
+                let startIdx = url.indexOf("/");
+                const pkgName = url.substring(0, startIdx);
+                assetUrl = url.substring(startIdx + 1);
+                pkg = assetManager.getBundle(pkgName);
+                if (!pkg) {
+                    console.error(`bundle '${pkgName}' not found`);
+                    return;
+                }
+            }
+            pkg.load(assetUrl, Asset, callback);
         }
     }
-    addExternalAssetRef(url, asset) {
+    addExternalAssetRef(url, assets) {
         if (!this._externalAssets[url]) {
-            this._externalAssets[url] = asset;
-            asset.addRef();
+            this._externalAssets[url] = assets;
+            for (let i = 0; i < assets.length; i++) {
+                assets[i].addRef();
+            }
         }
     }
     freeExternal() {
-        const bundle = resources;
         for (const key in this._externalAssets) {
             if (!Object.prototype.hasOwnProperty.call(this._externalAssets, key)) {
                 continue;
             }
-            const asset = this._externalAssets[key];
-            asset.decRef();
+            const assets = this._externalAssets[key];
+            const asset = assets[0];
+            for (let i = 1; i < assets.length; i++) {
+                let asset = assets[i];
+                asset.decRef(UIConfig.autoReleaseAssets);
+            }
             if (asset.refCount <= 0 && UIConfig.autoReleaseAssets) {
                 assetManager.releaseAsset(asset);
                 if (key.startsWith("http://")
                     || key.startsWith("https://")
                     || key.startsWith('/')) ;
                 else {
-                    bundle.release(key + "/spriteFrame");
+                    for (let i = 1; i < assets.length; i++) {
+                        let asset = assets[i];
+                        if (asset.refCount <= 0) {
+                            assetManager.releaseAsset(asset);
+                        }
+                    }
                 }
             }
         }
