@@ -1,4 +1,4 @@
-import { BitmapFont, Color, Font, HorizontalTextAlignment, InstanceMaterialType, Label, LabelOutline, LabelShadow, Node, SystemEventType, Vec2, VerticalTextAlignment, isValid } from "cc";
+import { BitmapFont, Color, Font, HorizontalTextAlignment, InstanceMaterialType, Label, LabelOutline, LabelShadow, Node, SystemEventType, UIRenderer, Vec2, VerticalTextAlignment, isValid, math } from "cc";
 import { Event as FUIEvent } from "./event/Event";
 import { AutoSizeType, ObjectPropID } from "./FieldTypes";
 import { GObject } from "./GObject";
@@ -9,8 +9,14 @@ import { ByteBuffer } from "./utils/ByteBuffer";
 import { toGrayedColor } from "./utils/ToolSet";
 import { defaultParser } from "./utils/UBBParser";
 
+// import { TextMeshLabel } from "TextMesh/index";
+
+declare class TextMeshLabel {
+    [x: string]: any;
+}
+
 export class GTextField extends GObject {
-    public _label: Label;
+    public _label: TextMeshLabel;
 
     protected _font: string;
     protected _realFont: string | Font;
@@ -26,10 +32,10 @@ export class GTextField extends GObject {
     protected _autoSize: AutoSizeType;
     protected _updatingSize: boolean;
     protected _sizeDirty: boolean;
-    protected _outline?: LabelOutline;
-    protected _shadow?: LabelShadow;
     protected _fontPackageItem?: PackageItem;
     private _dirtyVersion: number = 0;
+    protected _isBold: boolean = false;
+    protected _stroke: number = 0;
 
     public constructor() {
         super();
@@ -52,10 +58,12 @@ export class GTextField extends GObject {
     }
 
     protected createRenderer() {
-        this._label = this._node.addComponent(Label);
+        //@ts-ignore
+        this._label = this._node.addComponent(TextMeshLabel);
         this._label.string = "";
         // this._label.getComponent(UITransform).setAnchorPoint(0, 1);
         this.autoSize = AutoSizeType.Both;
+        this.bold = false;
     }
 
     public set text(value: string | null) {
@@ -162,19 +170,19 @@ export class GTextField extends GObject {
     }
 
     public get align(): HorizontalTextAlignment {
-        return this._label ? this._label.horizontalAlign : 0;
+        return this._label ? <number>this._label.horizontalAlign : 0;
     }
 
     public set align(value: HorizontalTextAlignment) {
-        if (this._label) this._label.horizontalAlign = value;
+        if (this._label) this._label.horizontalAlign = <number>value;
     }
 
     public get verticalAlign(): VerticalTextAlignment {
-        return this._label ? this._label.verticalAlign : 0;
+        return this._label ? <number>this._label.verticalAlign : 0;
     }
 
     public set verticalAlign(value: VerticalTextAlignment) {
-        if (this._label) this._label.verticalAlign = value;
+        if (this._label) this._label.verticalAlign = <number>value;
     }
 
     public get leading(): number {
@@ -191,66 +199,56 @@ export class GTextField extends GObject {
     }
 
     public get letterSpacing(): number {
-        return this._label ? this._label.spacingX : 0;
+        return this._label ? this._label.letterSpace : 0;
     }
 
     public set letterSpacing(value: number) {
-        if (this._label && this._label.spacingX != value) {
+        if (this._label && this._label.letterSpace != value) {
             this.markSizeChanged();
-            this._label.spacingX = value;
+            this._label.letterSpace = value;
         }
     }
 
     public get underline(): boolean {
-        return this._label ? this._label.isUnderline : false;
+        return this._label ? this._label.enableUnderline : false;
     }
 
     public set underline(value: boolean) {
-        if (this._label) this._label.isUnderline = value;
+        if (this._label) this._label.enableUnderline = value;
     }
 
     public get bold(): boolean {
-        return this._label ? this._label.isBold : false;
+        return this._isBold;        
     }
 
     public set bold(value: boolean) {
-        if (this._label) this._label.isBold = value;
+        this._isBold = value;
+        if (this._label) this._label.dilate = value ? UIConfig.fontBoldWeight : UIConfig.fontWeight;
     }
 
     public get italic(): boolean {
-        return this._label ? this._label.isItalic : false;
+        return this._label ? this._label.enableItalic : false;
     }
 
     public set italic(value: boolean) {
-        if (this._label) this._label.isItalic = value;
+        if (this._label) this._label.enableItalic = value;
     }
 
     public get singleLine(): boolean {
-        return this._label ? !this._label.enableWrapText : false;
+        return this._label ? !this._label.multiline : false;
     }
 
     public set singleLine(value: boolean) {
-        if (this._label) this._label.enableWrapText = !value;
+        if (this._label) this._label.multiline = !value;
     }
 
     public get stroke(): number {
-        return (this._outline && this._outline.enabled) ? this._outline.width : 0;
+        return this._stroke;
     }
 
     public set stroke(value: number) {
-        if (value == 0) {
-            if (this._outline)
-                this._outline.enabled = false;
-        }
-        else {
-            if (!this._outline) {
-                this._outline = this._node.addComponent(LabelOutline);
-                this.updateStrokeColor();
-            }
-            else
-                this._outline.enabled = true;
-            this._outline.width = value;
-        }
+        this._stroke = value;
+        if (this._label) this._label.stroke = math.clamp01(value / this._fontSize * UIConfig.strokeScale);
     }
 
     public get strokeColor(): Color {
@@ -261,6 +259,10 @@ export class GTextField extends GObject {
         if (!this._strokeColor)
             this._strokeColor = new Color();
         this._strokeColor.set(value);
+        if(this._label) {
+            this._label.strokeBlur = UIConfig.strokeBlur;
+        }
+        
         this.updateGear(4);
         this.updateStrokeColor();
     }
@@ -274,17 +276,14 @@ export class GTextField extends GObject {
             this._shadowOffset = new Vec2();
         this._shadowOffset.set(value);
         if (this._shadowOffset.x != 0 || this._shadowOffset.y != 0) {
-            if (!this._shadow) {
-                this._shadow = this._node.addComponent(LabelShadow);
-                this.updateShadowColor();
-            }
-            else
-                this._shadow.enabled = true;
-            this._shadow.offset.x = value.x;
-            this._shadow.offset.y = -value.y;
+            this._label.shadow = UIConfig.shadowSize;
+            this._label.shadowBlur = UIConfig.shaodwBlur;
+            this._label.shadowOffsetX = value.x;
+            this._label.shadowOffsetY = -value.y;
         }
-        else if (this._shadow)
-            this._shadow.enabled = false;
+        else {
+            this._label.shadow = 0;
+        }
     }
 
     public get shadowColor(): Color {
@@ -423,16 +422,21 @@ export class GTextField extends GObject {
     }
 
     protected assignFont(label: any, value: string | Font): void {
-        if (value instanceof Font)
-            label.font = value;
-        else {
-            let font = getFontByName(<string>value);
-            if (!font) {
-                label.fontFamily = <string>value;
-                label.useSystemFont = true;
+        if(label instanceof Label) {
+            if (value instanceof Font)
+                label.font = value;
+            else {
+                let font = getFontByName(<string>value);
+                if (!font) {
+                    label.fontFamily = <string>value;
+                    label.useSystemFont = true;
+                }
+                else
+                    label.font = font;
             }
-            else
-                label.font = font;
+        }else if(label instanceof TextMeshLabel){
+            if(value instanceof Font) return;            
+            label.fontName = value;
         }
 
         this.updateFontColor();
@@ -455,6 +459,8 @@ export class GTextField extends GObject {
                 if (this._grayed) 
                     value = toGrayedColor(value);
             }            
+        }else if(label instanceof TextMeshLabel){
+            label.color = value;
         }else{
             if (this._grayed) 
                 value = toGrayedColor(value);
@@ -472,30 +478,29 @@ export class GTextField extends GObject {
     }
 
     protected updateStrokeColor() {
-        if (!this._outline)
+        if (!this._label)
             return;
         if (!this._strokeColor)
             this._strokeColor = new Color();
         if (this._grayed)
-            this._outline.color = toGrayedColor(this._strokeColor);
+            this._label.strokeColor = toGrayedColor(this._strokeColor);
         else
-            this._outline.color = this._strokeColor;
+            this._label.strokeColor = this._strokeColor;
     }
 
     protected updateShadowColor() {
-        if (!this._shadow)
+        if (!this._label)
             return;
         if (!this._shadowColor)
             this._shadowColor = new Color();
         if (this._grayed)
-            this._shadow.color = toGrayedColor(this._shadowColor)
+            this._label.shadowColor = toGrayedColor(this._shadowColor)
         else
-            this._shadow.color = this._shadowColor;
+        this._label.shadowColor = this._shadowColor;
     }
 
     protected updateFontSize() {
         let font: any = this._label.font;
-        
         if (font instanceof BitmapFont) {
             let fntConfig = font.fntConfig;
             if (fntConfig.resizable)
@@ -511,20 +516,19 @@ export class GTextField extends GObject {
     }
 
     protected updateOverflow() {
-        const uiComp = this._node._uiProps.uiTransformComp;
         if (this._autoSize == AutoSizeType.Both)
-            this._label.overflow = Label.Overflow.NONE;
+            this._label.overflow = <number>Label.Overflow.NONE;
         else if (this._autoSize == AutoSizeType.Height) {
-            this._label.overflow = Label.Overflow.RESIZE_HEIGHT;
-            uiComp.width = this._width;
+            this._label.overflow = <number>Label.Overflow.RESIZE_HEIGHT;
+            this._node._uiProps.uiTransformComp.width = this._width;
         }
         else if (this._autoSize == AutoSizeType.Shrink) {
-            this._label.overflow = Label.Overflow.SHRINK;
-            uiComp.setContentSize(this._width, this._height);
+            this._label.overflow = <number>Label.Overflow.SHRINK;
+            this._node._uiProps.uiTransformComp.setContentSize(this._width, this._height);
         }
         else {
-            this._label.overflow = Label.Overflow.CLAMP;
-            uiComp.setContentSize(this._width, this._height);
+            this._label.overflow = <number>Label.Overflow.CLAMP;
+            this._node._uiProps.uiTransformComp.setContentSize(this._width, this._height);
         }
     }
 

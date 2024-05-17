@@ -1,4 +1,4 @@
-import { gfx, UIRenderer, Event as Event$1, Vec2, Node, game, director, macro, Color, Layers, Font, resources, Vec3, Rect, UITransform, UIOpacity, Component, Graphics, misc, Sprite, isValid, Size, screen, view, assetManager, ImageAsset, AudioClip, BufferAsset, AssetManager, Asset, Texture2D, SpriteFrame, BitmapFont, sp, dragonBones, path, Label, LabelOutline, LabelShadow, InstanceMaterialType, SpriteAtlas, RichText, sys, EventMouse, EventTarget, Mask, math, View, AudioSourceComponent, EditBox, Overflow } from 'cc';
+import { gfx, UIRenderer, Event as Event$1, Vec2, Node, game, director, macro, Color, Layers, Font, resources, Vec3, Rect, UITransform, UIOpacity, Component, Graphics, misc, Sprite, isValid, Size, screen, view, assetManager, ImageAsset, AudioClip, BufferAsset, AssetManager, Asset, Texture2D, SpriteFrame, BitmapFont, sp, dragonBones, path, math, Label, InstanceMaterialType, SpriteAtlas, RichText, sys, EventMouse, EventTarget, Mask, View, AudioSourceComponent, EditBox, Overflow } from 'cc';
 import { EDITOR } from 'cc/env';
 
 var ButtonMode;
@@ -2487,6 +2487,12 @@ UIConfig.defaultUILayer = Layers.Enum.UI_2D;
 UIConfig.enableDelayLoad = true;
 // 
 UIConfig.autoReleaseAssets = false;
+UIConfig.fontWeight = 0.16;
+UIConfig.fontBoldWeight = 0.32;
+UIConfig.shadowSize = 0.03;
+UIConfig.shaodwBlur = 0;
+UIConfig.strokeBlur = 0;
+UIConfig.strokeScale = 1;
 let _fontRegistry = {};
 function registerFont(name, font, bundle) {
     if (font instanceof Font)
@@ -6349,6 +6355,8 @@ class GTextField extends GObject {
         this._fontSize = 0;
         this._leading = 0;
         this._dirtyVersion = 0;
+        this._isBold = false;
+        this._stroke = 0;
         this._node.name = "GTextField";
         this._touchDisabled = true;
         this._text = "";
@@ -6361,10 +6369,12 @@ class GTextField extends GObject {
         this._node.on(Node.EventType.SIZE_CHANGED, this.onLabelSizeChanged, this);
     }
     createRenderer() {
-        this._label = this._node.addComponent(Label);
+        //@ts-ignore
+        this._label = this._node.addComponent(TextMeshLabel);
         this._label.string = "";
         // this._label.getComponent(UITransform).setAnchorPoint(0, 1);
         this.autoSize = AutoSizeType.Both;
+        this.bold = false;
     }
     set text(value) {
         this._text = value;
@@ -6475,59 +6485,50 @@ class GTextField extends GObject {
         }
     }
     get letterSpacing() {
-        return this._label ? this._label.spacingX : 0;
+        return this._label ? this._label.letterSpace : 0;
     }
     set letterSpacing(value) {
-        if (this._label && this._label.spacingX != value) {
+        if (this._label && this._label.letterSpace != value) {
             this.markSizeChanged();
-            this._label.spacingX = value;
+            this._label.letterSpace = value;
         }
     }
     get underline() {
-        return this._label ? this._label.isUnderline : false;
+        return this._label ? this._label.enableUnderline : false;
     }
     set underline(value) {
         if (this._label)
-            this._label.isUnderline = value;
+            this._label.enableUnderline = value;
     }
     get bold() {
-        return this._label ? this._label.isBold : false;
+        return this._isBold;
     }
     set bold(value) {
+        this._isBold = value;
         if (this._label)
-            this._label.isBold = value;
+            this._label.dilate = value ? UIConfig.fontBoldWeight : UIConfig.fontWeight;
     }
     get italic() {
-        return this._label ? this._label.isItalic : false;
+        return this._label ? this._label.enableItalic : false;
     }
     set italic(value) {
         if (this._label)
-            this._label.isItalic = value;
+            this._label.enableItalic = value;
     }
     get singleLine() {
-        return this._label ? !this._label.enableWrapText : false;
+        return this._label ? !this._label.multiline : false;
     }
     set singleLine(value) {
         if (this._label)
-            this._label.enableWrapText = !value;
+            this._label.multiline = !value;
     }
     get stroke() {
-        return (this._outline && this._outline.enabled) ? this._outline.width : 0;
+        return this._stroke;
     }
     set stroke(value) {
-        if (value == 0) {
-            if (this._outline)
-                this._outline.enabled = false;
-        }
-        else {
-            if (!this._outline) {
-                this._outline = this._node.addComponent(LabelOutline);
-                this.updateStrokeColor();
-            }
-            else
-                this._outline.enabled = true;
-            this._outline.width = value;
-        }
+        this._stroke = value;
+        if (this._label)
+            this._label.stroke = math.clamp01(value / this._fontSize * UIConfig.strokeScale);
     }
     get strokeColor() {
         return this._strokeColor;
@@ -6536,6 +6537,9 @@ class GTextField extends GObject {
         if (!this._strokeColor)
             this._strokeColor = new Color();
         this._strokeColor.set(value);
+        if (this._label) {
+            this._label.strokeBlur = UIConfig.strokeBlur;
+        }
         this.updateGear(4);
         this.updateStrokeColor();
     }
@@ -6547,17 +6551,14 @@ class GTextField extends GObject {
             this._shadowOffset = new Vec2();
         this._shadowOffset.set(value);
         if (this._shadowOffset.x != 0 || this._shadowOffset.y != 0) {
-            if (!this._shadow) {
-                this._shadow = this._node.addComponent(LabelShadow);
-                this.updateShadowColor();
-            }
-            else
-                this._shadow.enabled = true;
-            this._shadow.offset.x = value.x;
-            this._shadow.offset.y = -value.y;
+            this._label.shadow = UIConfig.shadowSize;
+            this._label.shadowBlur = UIConfig.shaodwBlur;
+            this._label.shadowOffsetX = value.x;
+            this._label.shadowOffsetY = -value.y;
         }
-        else if (this._shadow)
-            this._shadow.enabled = false;
+        else {
+            this._label.shadow = 0;
+        }
     }
     get shadowColor() {
         return this._shadowColor;
@@ -6669,16 +6670,23 @@ class GTextField extends GObject {
         this._label.string = text2;
     }
     assignFont(label, value) {
-        if (value instanceof Font)
-            label.font = value;
-        else {
-            let font = getFontByName(value);
-            if (!font) {
-                label.fontFamily = value;
-                label.useSystemFont = true;
+        if (label instanceof Label) {
+            if (value instanceof Font)
+                label.font = value;
+            else {
+                let font = getFontByName(value);
+                if (!font) {
+                    label.fontFamily = value;
+                    label.useSystemFont = true;
+                }
+                else
+                    label.font = font;
             }
-            else
-                label.font = font;
+        }
+        else if (label instanceof TextMeshLabel) {
+            if (value instanceof Font)
+                return;
+            label.fontName = value;
         }
         this.updateFontColor();
     }
@@ -6700,6 +6708,9 @@ class GTextField extends GObject {
                     value = toGrayedColor(value);
             }
         }
+        else if (label instanceof TextMeshLabel) {
+            label.color = value;
+        }
         else {
             if (this._grayed)
                 value = toGrayedColor(value);
@@ -6713,24 +6724,24 @@ class GTextField extends GObject {
         this.assignFontColor(this._label, this._color);
     }
     updateStrokeColor() {
-        if (!this._outline)
+        if (!this._label)
             return;
         if (!this._strokeColor)
             this._strokeColor = new Color();
         if (this._grayed)
-            this._outline.color = toGrayedColor(this._strokeColor);
+            this._label.strokeColor = toGrayedColor(this._strokeColor);
         else
-            this._outline.color = this._strokeColor;
+            this._label.strokeColor = this._strokeColor;
     }
     updateShadowColor() {
-        if (!this._shadow)
+        if (!this._label)
             return;
         if (!this._shadowColor)
             this._shadowColor = new Color();
         if (this._grayed)
-            this._shadow.color = toGrayedColor(this._shadowColor);
+            this._label.shadowColor = toGrayedColor(this._shadowColor);
         else
-            this._shadow.color = this._shadowColor;
+            this._label.shadowColor = this._shadowColor;
     }
     updateFontSize() {
         let font = this._label.font;
@@ -6748,20 +6759,19 @@ class GTextField extends GObject {
         }
     }
     updateOverflow() {
-        const uiComp = this._node._uiProps.uiTransformComp;
         if (this._autoSize == AutoSizeType.Both)
             this._label.overflow = Label.Overflow.NONE;
         else if (this._autoSize == AutoSizeType.Height) {
             this._label.overflow = Label.Overflow.RESIZE_HEIGHT;
-            uiComp.width = this._width;
+            this._node._uiProps.uiTransformComp.width = this._width;
         }
         else if (this._autoSize == AutoSizeType.Shrink) {
             this._label.overflow = Label.Overflow.SHRINK;
-            uiComp.setContentSize(this._width, this._height);
+            this._node._uiProps.uiTransformComp.setContentSize(this._width, this._height);
         }
         else {
             this._label.overflow = Label.Overflow.CLAMP;
-            uiComp.setContentSize(this._width, this._height);
+            this._node._uiProps.uiTransformComp.setContentSize(this._width, this._height);
         }
     }
     markSizeChanged() {

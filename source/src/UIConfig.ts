@@ -67,7 +67,19 @@ export class UIConfig {
 
     public static enableDelayLoad: boolean = true;
     // 
-    public static autoReleaseAssets: boolean = false;
+    public static autoReleaseAssets: boolean = false;    
+    
+    public static fontWeight: number = 0.16;
+
+    public static fontBoldWeight: number = 0.32;
+
+    public static shadowSize = 0.03;
+
+    public static shaodwBlur = 0;
+
+    public static strokeBlur = 0;
+
+    public static strokeScale = 1;
 }
 
 let _fontRegistry: { [index: string]: Font } = {};

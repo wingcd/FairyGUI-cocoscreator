@@ -439,13 +439,16 @@ declare module 'fairygui-cc/GRoot' {
 }
 
 declare module 'fairygui-cc/GTextField' {
-    import { Color, Font, HorizontalTextAlignment, Label, LabelOutline, LabelShadow, Vec2, VerticalTextAlignment } from "cc";
+    import { Color, Font, HorizontalTextAlignment, Vec2, VerticalTextAlignment } from "cc";
     import { AutoSizeType } from "fairygui-cc/FieldTypes";
     import { GObject } from "fairygui-cc/GObject";
     import { PackageItem } from "fairygui-cc/PackageItem";
     import { ByteBuffer } from "fairygui-cc/utils/ByteBuffer";
+    class TextMeshLabel {
+        [x: string]: any;
+    }
     export class GTextField extends GObject {
-        _label: Label;
+        _label: TextMeshLabel;
         protected _font: string;
         protected _realFont: string | Font;
         protected _fontSize: number;
@@ -462,9 +465,9 @@ declare module 'fairygui-cc/GTextField' {
         protected _autoSize: AutoSizeType;
         protected _updatingSize: boolean;
         protected _sizeDirty: boolean;
-        protected _outline?: LabelOutline;
-        protected _shadow?: LabelShadow;
         protected _fontPackageItem?: PackageItem;
+        protected _isBold: boolean;
+        protected _stroke: number;
         constructor();
         protected createRenderer(): void;
         set text(value: string | null);
@@ -533,6 +536,7 @@ declare module 'fairygui-cc/GTextField' {
         setup_beforeAdd(buffer: ByteBuffer, beginPos: number): void;
         setup_afterAdd(buffer: ByteBuffer, beginPos: number): void;
     }
+    export {};
 }
 
 declare module 'fairygui-cc/GRichTextField' {
@@ -1811,6 +1815,12 @@ declare module 'fairygui-cc/UIConfig' {
         static defaultUILayer: number;
         static enableDelayLoad: boolean;
         static autoReleaseAssets: boolean;
+        static fontWeight: number;
+        static fontBoldWeight: number;
+        static shadowSize: number;
+        static shaodwBlur: number;
+        static strokeBlur: number;
+        static strokeScale: number;
     }
     export function registerFont(name: string, font: Font | string, bundle?: AssetManager.Bundle): void;
     export function getFontByName(name: string): Font;
