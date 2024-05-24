@@ -9,21 +9,20 @@ import { ByteBuffer } from "./utils/ByteBuffer";
 import { toGrayedColor } from "./utils/ToolSet";
 import { defaultParser } from "./utils/UBBParser";
 
-// import { TextMeshLabel } from "TextMesh/index";
+// import { SuperLabel } from "TextMesh/index";
 
-declare class TextMeshLabel {
+declare class SuperLabel {
     [x: string]: any;
 }
 
 export class GTextField extends GObject {
-    public _label: TextMeshLabel;
+    public _label: SuperLabel;
 
     protected _font: string;
     protected _realFont: string | Font;
     protected _fontSize: number = 0;
     protected _color: Color;
     protected _strokeColor?: Color;
-    protected _shadowOffset?: Vec2;
     protected _shadowColor?: Color;
     protected _leading: number = 0;
     protected _text: string;
@@ -59,7 +58,7 @@ export class GTextField extends GObject {
 
     protected createRenderer() {
         //@ts-ignore
-        this._label = this._node.addComponent(TextMeshLabel);
+        this._label = this._node.addComponent(SuperLabel);
         this._label.string = "";
         // this._label.getComponent(UITransform).setAnchorPoint(0, 1);
         this.autoSize = AutoSizeType.Both;
@@ -210,11 +209,11 @@ export class GTextField extends GObject {
     }
 
     public get underline(): boolean {
-        return this._label ? this._label.enableUnderline : false;
+        return this._label ? this._label.underline : false;
     }
 
     public set underline(value: boolean) {
-        if (this._label) this._label.enableUnderline = value;
+        if (this._label) this._label.underline = value;
     }
 
     public get bold(): boolean {
@@ -223,23 +222,23 @@ export class GTextField extends GObject {
 
     public set bold(value: boolean) {
         this._isBold = value;
-        if (this._label) this._label.dilate = value ? UIConfig.fontBoldWeight : UIConfig.fontWeight;
+        if (this._label) this._label.bold = value;
     }
 
     public get italic(): boolean {
-        return this._label ? this._label.enableItalic : false;
+        return this._label ? this._label.italic : false;
     }
 
     public set italic(value: boolean) {
-        if (this._label) this._label.enableItalic = value;
+        if (this._label) this._label.italic = value;
     }
 
     public get singleLine(): boolean {
-        return this._label ? !this._label.multiline : false;
+        return this._label ? !this._label.singleLine : false;
     }
 
     public set singleLine(value: boolean) {
-        if (this._label) this._label.multiline = !value;
+        if (this._label) this._label.singleLine = !value;
     }
 
     public get stroke(): number {
@@ -248,7 +247,7 @@ export class GTextField extends GObject {
 
     public set stroke(value: number) {
         this._stroke = value;
-        if (this._label) this._label.stroke = math.clamp01(value / this._fontSize * UIConfig.strokeScale);
+        if (this._label) this._label.stroke = value;
     }
 
     public get strokeColor(): Color {
@@ -260,7 +259,7 @@ export class GTextField extends GObject {
             this._strokeColor = new Color();
         this._strokeColor.set(value);
         if(this._label) {
-            this._label.strokeBlur = UIConfig.strokeBlur;
+            this._label.strokeColor = value;
         }
         
         this.updateGear(4);
@@ -268,21 +267,12 @@ export class GTextField extends GObject {
     }
 
     public get shadowOffset(): Vec2 {
-        return this._shadowOffset;
+        return this._label ? this._label.shadowOffset : new Vec2();
     }
 
     public set shadowOffset(value: Vec2) {
-        if (!this._shadowOffset)
-            this._shadowOffset = new Vec2();
-        this._shadowOffset.set(value);
-        if (this._shadowOffset.x != 0 || this._shadowOffset.y != 0) {
-            this._label.shadow = UIConfig.shadowSize;
-            this._label.shadowBlur = UIConfig.shaodwBlur;
-            this._label.shadowOffsetX = value.x;
-            this._label.shadowOffsetY = -value.y;
-        }
-        else {
-            this._label.shadow = 0;
+        if(this._label) {
+            this._label.shadowOffset = value;
         }
     }
 
@@ -404,8 +394,8 @@ export class GTextField extends GObject {
     }
 
     public ensureSizeCorrect(): void {
-        if (this._sizeDirty) {
-            this._label.updateRenderData(true);
+        if (this._sizeDirty && this._label.label) {
+            this._label.label.updateRenderData(true);
             this._sizeDirty = false;
         }
     }
@@ -434,7 +424,7 @@ export class GTextField extends GObject {
                 else
                     label.font = font;
             }
-        }else if(label instanceof TextMeshLabel){
+        }else if(label instanceof SuperLabel){
             if(value instanceof Font) return;            
             label.fontName = value;
         }
@@ -459,7 +449,7 @@ export class GTextField extends GObject {
                 if (this._grayed) 
                     value = toGrayedColor(value);
             }            
-        }else if(label instanceof TextMeshLabel){
+        }else if(label instanceof SuperLabel){
             label.color = value;
         }else{
             if (this._grayed) 

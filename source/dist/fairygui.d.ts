@@ -444,17 +444,16 @@ declare module 'fairygui-cc/GTextField' {
     import { GObject } from "fairygui-cc/GObject";
     import { PackageItem } from "fairygui-cc/PackageItem";
     import { ByteBuffer } from "fairygui-cc/utils/ByteBuffer";
-    class TextMeshLabel {
+    class SuperLabel {
         [x: string]: any;
     }
     export class GTextField extends GObject {
-        _label: TextMeshLabel;
+        _label: SuperLabel;
         protected _font: string;
         protected _realFont: string | Font;
         protected _fontSize: number;
         protected _color: Color;
         protected _strokeColor?: Color;
-        protected _shadowOffset?: Vec2;
         protected _shadowColor?: Color;
         protected _leading: number;
         protected _text: string;
@@ -1815,12 +1814,6 @@ declare module 'fairygui-cc/UIConfig' {
         static defaultUILayer: number;
         static enableDelayLoad: boolean;
         static autoReleaseAssets: boolean;
-        static fontWeight: number;
-        static fontBoldWeight: number;
-        static shadowSize: number;
-        static shaodwBlur: number;
-        static strokeBlur: number;
-        static strokeScale: number;
     }
     export function registerFont(name: string, font: Font | string, bundle?: AssetManager.Bundle): void;
     export function getFontByName(name: string): Font;

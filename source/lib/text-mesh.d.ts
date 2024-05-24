@@ -1,4 +1,5 @@
-/// <reference path="./cc.d.ts" />
+/// <reference path="../dts/cc.d.ts" />
+/// <reference types="../../../temp/declarations/cc" />
 declare module "TextMesh/types/IChar" {
     export interface IChar {
         code: string;
@@ -37,6 +38,12 @@ declare module "TextMesh/font/FontParser" {
         atlasHeight?: number;
         dynamic?: number;
         staticChannels?: number;
+        normalWeight?: number;
+        boldWeightScale?: number;
+        strokeScale?: number;
+        strokeBlur?: number;
+        shadowSize?: number;
+        shadowBlur?: number;
         underLineOffset?: number;
         keepUnlderLineSpace?: number;
         underLineThickness?: number;
@@ -143,7 +150,7 @@ declare module "TextMesh/label/types" {
          *
          * @zh 在 RESIZE_HEIGHT 模式下，只能更改文本的宽度，高度是自动改变的。
          */
-        ResizeHeight = 4
+        ResizeHeight = 3
     }
     export enum EScriptType {
         None = 0,
@@ -799,6 +806,8 @@ declare module "TextMesh/utils/Utils" {
         static readTexturePixels(src: RenderTexture | Texture2D, rect?: Rect, buffer?: Uint8Array): Uint8Array;
         static uploadData(target: RenderTexture | Texture2D, source: HTMLCanvasElement | HTMLImageElement | ArrayBufferView | ImageBitmap, rect?: Rect, level?: number, arrayIndex?: number): void;
         static until(condition: () => boolean): Promise<void>;
+        static wait(time: number): Promise<void>;
+        static waitframe(): Promise<void>;
         static arrayBufferToString(buffer: ArrayBuffer, begin?: number): string;
     }
 }
@@ -856,7 +865,7 @@ declare module "TextMesh/utils/ResManger" {
     }
 }
 declare module "TextMesh/font/TMFont" {
-    import { Asset, BufferAsset, TextAsset, Texture2D, TTFFont } from "cc";
+    import { Asset, BufferAsset, TextAsset, Texture2D, TTFFont, Material } from "cc";
     import { Char } from "TextMesh/font/Char";
     import { IFontData } from "TextMesh/types/IFontData";
     import { ITMFont } from "TextMesh/types/ITMFont";
@@ -876,13 +885,22 @@ declare module "TextMesh/font/TMFont" {
         private _staticChannels;
         private _dynamic;
         private _padTrim;
+        private _normalWeight;
+        private _boldWeightScale;
+        private _strokeScale;
+        private _strokeBlur;
+        private _shadowSize;
+        private _shadowBlur;
         private _underLineOffset;
         private _keepUnlderLineSpace;
         private _underLineThickness;
         private _strikeOffset;
         private _strikeThickness;
         private _scriptThickness;
+        private _material;
         private _chars;
+        get version(): string;
+        get material(): Material;
         get uid(): string;
         get font(): TTFFont;
         get fontFamily(): string;
@@ -893,6 +911,12 @@ declare module "TextMesh/font/TMFont" {
         get dynamic(): boolean;
         get staticChannels(): number;
         get fontData(): IFontData;
+        get normalWeight(): number;
+        get boldWeightScale(): number;
+        get strokeScale(): number;
+        get strokeBlur(): number;
+        get shadowSize(): number;
+        get shadowBlur(): number;
         get underLineOffset(): number;
         get underLineThickness(): number;
         get keepUnlderLineSpace(): boolean;
@@ -909,7 +933,7 @@ declare module "TextMesh/font/TMFont" {
         removeDynamicChar(code: string): void;
         private _loadFontInfo;
         private isNone;
-        static deserializeAsync(data: string | TextAsset | ArrayBuffer | BufferAsset): Promise<TMFont>;
+        static deserializeAsync(data: string | TextAsset | ArrayBuffer | BufferAsset, material?: Material): Promise<TMFont>;
         static deserialize(data: string | TextAsset | ArrayBuffer | BufferAsset): TMFont;
     }
 }
@@ -1255,6 +1279,8 @@ declare module "TextMesh/settings" {
         antiAlis: boolean;
         shadowScale: number;
         dilateScale: number;
+        enableTextMesh: boolean;
+        defulatUseFontParams: boolean;
     };
 }
 declare module "TextMesh/label/TextMeshAssembler" {
@@ -1319,7 +1345,7 @@ declare module "TextMesh/label/SlotConnector" {
     }
 }
 declare module "TextMesh/font/FontManager" {
-    import { BufferAsset, Component } from "cc";
+    import { BufferAsset, Component, Material } from "cc";
     import { TMFont } from "TextMesh/font/TMFont";
     export class RegistFontInfo {
         private _fontName;
@@ -1328,6 +1354,9 @@ declare module "TextMesh/font/FontManager" {
         private _fontData;
         get fontData(): BufferAsset;
         set fontData(value: BufferAsset);
+        private _material;
+        get material(): Material;
+        set material(value: Material);
         private canLoad;
     }
     export class FontManager extends Component {
@@ -1338,13 +1367,15 @@ declare module "TextMesh/font/FontManager" {
         private _registFontMap;
         private _registFonts;
         onLoad(): void;
+        onFocusInEditor(): void;
         refresh(): void;
         private loadAllRegistFont;
-        getFont(fontName: string): any;
+        getFont(fontName: string): TMFont;
         getFontAsync(fontName: string): Promise<TMFont>;
-        loadFont(fontName: string, fontData?: BufferAsset): Promise<TMFont>;
+        loadFont(fontName: string, fontData?: BufferAsset, material?: Material): Promise<TMFont>;
         _loadFont(fontName: string): Promise<TMFont>;
         removeFont(fontName: string): void;
+        protected onDestroy(): void;
     }
 }
 declare module "TextMesh/label/TextMeshLabel" {
@@ -1418,6 +1449,8 @@ declare module "TextMesh/label/TextMeshLabel" {
         protected _glowOuter: number;
         protected _glowPower: number;
         protected _breakWestern: boolean;
+        protected _enableBold: boolean;
+        protected _useFontParams: boolean;
         private _style;
         private _clicks;
         private _slots;
@@ -1580,6 +1613,10 @@ declare module "TextMesh/label/TextMeshLabel" {
         set glowPower(value: number);
         get breakWestern(): boolean;
         set breakWestern(value: boolean);
+        get enableBold(): boolean;
+        set enableBold(value: boolean);
+        get useFontParams(): boolean;
+        set useFontParams(value: boolean);
         get handleTouchEvent(): boolean;
         set handleTouchEvent(value: boolean);
         get uiTransform(): UITransform;
@@ -1672,6 +1709,83 @@ declare module "TextMesh/label/TextMeshLabel" {
         protected _canRender(): boolean;
     }
 }
+declare module "TextMesh/label/SuperLabel" {
+    import { Color, Component, Font, Label, Vec2 } from "cc";
+    import { TextMeshLabel } from "TextMesh/label/TextMeshLabel";
+    export class SuperLabel extends Component {
+        private _ccLabel;
+        private _outline;
+        private _shadow;
+        private _textMeshLabel;
+        private _textmeshMode;
+        private _string;
+        private _font;
+        private _fontName;
+        private _fontSize;
+        private _color;
+        private _overflow;
+        private _horizontalAlign;
+        private _verticalAlign;
+        private _letterSpace;
+        private _underline;
+        private _bold;
+        private _italic;
+        private _singleLine;
+        private _lineHeight;
+        private _strokeColor;
+        private _shadowColor;
+        private _shadowBlur;
+        private _shadowOffset;
+        private _stroke;
+        get textmeshMode(): boolean;
+        set textmeshMode(value: boolean);
+        get string(): string;
+        set string(value: string);
+        get font(): Font;
+        set font(value: Font);
+        get fontName(): string;
+        set fontName(value: string);
+        get fontSize(): number;
+        set fontSize(value: number);
+        get color(): Color;
+        set color(value: Color);
+        get stroke(): number;
+        private get enableStroke();
+        set stroke(value: number);
+        get strokeColor(): Color;
+        set strokeColor(value: Color);
+        get shadowOffset(): Vec2;
+        private get enableShadow();
+        set shadowOffset(value: Vec2);
+        get shadowColor(): Color;
+        set shadowColor(value: Color);
+        get shadowBlur(): number;
+        set shadowBlur(value: number);
+        get overflow(): number;
+        set overflow(value: number);
+        get horizontalAlign(): number;
+        set horizontalAlign(value: number);
+        get verticalAlign(): number;
+        set verticalAlign(value: number);
+        get letterSpace(): number;
+        set letterSpace(value: number);
+        get underline(): boolean;
+        set underline(value: boolean);
+        get bold(): boolean;
+        set bold(value: boolean);
+        get italic(): boolean;
+        set italic(value: boolean);
+        get singleLine(): boolean;
+        set singleLine(value: boolean);
+        get lineHeight(): number;
+        set lineHeight(value: number);
+        onLoad(): void;
+        buildLabel(): void;
+        private _changeMode;
+        get label(): Label | TextMeshLabel;
+        private _applyLabelInfo;
+    }
+}
 declare module "TextMesh/index" {
     export * from "TextMesh/font/TMFont";
     export * from "TextMesh/label/types";
@@ -1683,6 +1797,7 @@ declare module "TextMesh/index" {
     export * from "TextMesh/utils/UBBParser";
     export * from "TextMesh/label/CharInfo";
     export * from "TextMesh/settings";
+    export * from "TextMesh/label/SuperLabel";
 }
 declare module "TextMesh/label/TextMeshRenderData" {
     import { IRenderData, math } from "cc";

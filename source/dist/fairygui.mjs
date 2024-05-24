@@ -1,4 +1,4 @@
-import { gfx, UIRenderer, Event as Event$1, Vec2, Node, game, director, macro, Color, Layers, Font, resources, Vec3, Rect, UITransform, UIOpacity, Component, Graphics, misc, Sprite, isValid, Size, screen, view, assetManager, ImageAsset, AudioClip, BufferAsset, AssetManager, Asset, Texture2D, SpriteFrame, BitmapFont, sp, dragonBones, path, math, Label, InstanceMaterialType, SpriteAtlas, RichText, sys, EventMouse, EventTarget, Mask, View, AudioSourceComponent, EditBox, Overflow } from 'cc';
+import { gfx, UIRenderer, Event as Event$1, Vec2, Node, game, director, macro, Color, Layers, Font, resources, Vec3, Rect, UITransform, UIOpacity, Component, Graphics, misc, Sprite, isValid, Size, screen, view, assetManager, ImageAsset, AudioClip, BufferAsset, AssetManager, Asset, Texture2D, SpriteFrame, BitmapFont, sp, dragonBones, path, Label, InstanceMaterialType, SpriteAtlas, RichText, sys, EventMouse, EventTarget, Mask, math, View, AudioSourceComponent, EditBox, Overflow } from 'cc';
 import { EDITOR } from 'cc/env';
 
 var ButtonMode;
@@ -2487,12 +2487,6 @@ UIConfig.defaultUILayer = Layers.Enum.UI_2D;
 UIConfig.enableDelayLoad = true;
 // 
 UIConfig.autoReleaseAssets = false;
-UIConfig.fontWeight = 0.16;
-UIConfig.fontBoldWeight = 0.32;
-UIConfig.shadowSize = 0.03;
-UIConfig.shaodwBlur = 0;
-UIConfig.strokeBlur = 0;
-UIConfig.strokeScale = 1;
 let _fontRegistry = {};
 function registerFont(name, font, bundle) {
     if (font instanceof Font)
@@ -6370,7 +6364,7 @@ class GTextField extends GObject {
     }
     createRenderer() {
         //@ts-ignore
-        this._label = this._node.addComponent(TextMeshLabel);
+        this._label = this._node.addComponent(SuperLabel);
         this._label.string = "";
         // this._label.getComponent(UITransform).setAnchorPoint(0, 1);
         this.autoSize = AutoSizeType.Both;
@@ -6494,11 +6488,11 @@ class GTextField extends GObject {
         }
     }
     get underline() {
-        return this._label ? this._label.enableUnderline : false;
+        return this._label ? this._label.underline : false;
     }
     set underline(value) {
         if (this._label)
-            this._label.enableUnderline = value;
+            this._label.underline = value;
     }
     get bold() {
         return this._isBold;
@@ -6506,21 +6500,21 @@ class GTextField extends GObject {
     set bold(value) {
         this._isBold = value;
         if (this._label)
-            this._label.dilate = value ? UIConfig.fontBoldWeight : UIConfig.fontWeight;
+            this._label.bold = value;
     }
     get italic() {
-        return this._label ? this._label.enableItalic : false;
+        return this._label ? this._label.italic : false;
     }
     set italic(value) {
         if (this._label)
-            this._label.enableItalic = value;
+            this._label.italic = value;
     }
     get singleLine() {
-        return this._label ? !this._label.multiline : false;
+        return this._label ? !this._label.singleLine : false;
     }
     set singleLine(value) {
         if (this._label)
-            this._label.multiline = !value;
+            this._label.singleLine = !value;
     }
     get stroke() {
         return this._stroke;
@@ -6528,7 +6522,7 @@ class GTextField extends GObject {
     set stroke(value) {
         this._stroke = value;
         if (this._label)
-            this._label.stroke = math.clamp01(value / this._fontSize * UIConfig.strokeScale);
+            this._label.stroke = value;
     }
     get strokeColor() {
         return this._strokeColor;
@@ -6538,26 +6532,17 @@ class GTextField extends GObject {
             this._strokeColor = new Color();
         this._strokeColor.set(value);
         if (this._label) {
-            this._label.strokeBlur = UIConfig.strokeBlur;
+            this._label.strokeColor = value;
         }
         this.updateGear(4);
         this.updateStrokeColor();
     }
     get shadowOffset() {
-        return this._shadowOffset;
+        return this._label ? this._label.shadowOffset : new Vec2();
     }
     set shadowOffset(value) {
-        if (!this._shadowOffset)
-            this._shadowOffset = new Vec2();
-        this._shadowOffset.set(value);
-        if (this._shadowOffset.x != 0 || this._shadowOffset.y != 0) {
-            this._label.shadow = UIConfig.shadowSize;
-            this._label.shadowBlur = UIConfig.shaodwBlur;
-            this._label.shadowOffsetX = value.x;
-            this._label.shadowOffsetY = -value.y;
-        }
-        else {
-            this._label.shadow = 0;
+        if (this._label) {
+            this._label.shadowOffset = value;
         }
     }
     get shadowColor() {
@@ -6656,8 +6641,8 @@ class GTextField extends GObject {
         return this._node._uiProps.uiTransformComp.width;
     }
     ensureSizeCorrect() {
-        if (this._sizeDirty) {
-            this._label.updateRenderData(true);
+        if (this._sizeDirty && this._label.label) {
+            this._label.label.updateRenderData(true);
             this._sizeDirty = false;
         }
     }
@@ -6683,7 +6668,7 @@ class GTextField extends GObject {
                     label.font = font;
             }
         }
-        else if (label instanceof TextMeshLabel) {
+        else if (label instanceof SuperLabel) {
             if (value instanceof Font)
                 return;
             label.fontName = value;
@@ -6708,7 +6693,7 @@ class GTextField extends GObject {
                     value = toGrayedColor(value);
             }
         }
-        else if (label instanceof TextMeshLabel) {
+        else if (label instanceof SuperLabel) {
             label.color = value;
         }
         else {
