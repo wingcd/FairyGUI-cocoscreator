@@ -6514,7 +6514,7 @@ class GTextField extends GObject {
     }
     set singleLine(value) {
         if (this._label)
-            this._label.singleLine = !value;
+            this._label.singleLine = value;
     }
     get stroke() {
         return this._stroke;

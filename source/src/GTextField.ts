@@ -238,7 +238,7 @@ export class GTextField extends GObject {
     }
 
     public set singleLine(value: boolean) {
-        if (this._label) this._label.singleLine = !value;
+        if (this._label) this._label.singleLine = value;
     }
 
     public get stroke(): number {

@@ -2,3 +2,4 @@ node_modules
 .DS_Store
 demo/UIProject/.objs
 /source/build
+/demo/extensions
