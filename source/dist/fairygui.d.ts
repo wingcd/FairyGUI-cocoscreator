@@ -539,14 +539,13 @@ declare module 'fairygui-cc/GTextField' {
 }
 
 declare module 'fairygui-cc/GRichTextField' {
-    import { HorizontalTextAlignment, RichText, SpriteAtlas, SpriteFrame } from "cc";
+    import { HorizontalTextAlignment, SpriteAtlas, SpriteFrame } from "cc";
     import { GTextField } from "fairygui-cc/GTextField";
     export class RichTextImageAtlas extends SpriteAtlas {
         getSpriteFrame(key: string): SpriteFrame;
         getSpriteFrameAsync(key: string): Promise<SpriteFrame>;
     }
     export class GRichTextField extends GTextField {
-        _richText: RichText;
         linkUnderline: boolean;
         linkColor: string;
         constructor();

@@ -68,6 +68,7 @@ declare module "TextMesh/font/FontParser" {
         glyphRight?: number;
         ascent?: number;
         descent?: number;
+        scale?: number;
     };
     export class FontParser {
         private static _sid;
@@ -95,6 +96,7 @@ declare module "TextMesh/font/Char" {
         size: number;
         ascent: number;
         descent: number;
+        scale: number;
         /**
          * channel id[0,3]
          */
@@ -842,6 +844,10 @@ declare module "TextMesh/font/FontData" {
         getRectLine(): Char;
         getNoneChar(): Char;
         getCharInfo(code: string, charRender?: (code: string, tmFont: ITMFont) => GlyphInfo, thisRender?: any): Char;
+        /**
+         * 隐患：微信开放域开启后，不能读取纹理数据
+         * @param cid
+         */
         private clearChannel;
         private writeToTexture;
     }
@@ -852,6 +858,7 @@ declare module "TextMesh/utils/ResManger" {
         static preload(uuid: string, progress?: Function): Promise<unknown>;
         static loadAB(abName: string, progress?: Function): Promise<unknown>;
         static getBundle(abName?: string): import("cc").AssetManager.Bundle;
+        static getBundleAsync(abName: string): Promise<unknown>;
         static getByUUIDAsync<T = Asset>(uuid: string, type: typeof Asset): Promise<T>;
         static get<T>(abName: string, url: string | Array<string>, type: typeof Asset): T | T[];
         static getAsync<T>(abName: string, url: string | Array<string>, type: typeof Asset): Promise<any>;
@@ -1279,8 +1286,8 @@ declare module "TextMesh/settings" {
         antiAlis: boolean;
         shadowScale: number;
         dilateScale: number;
-        enableTextMesh: boolean;
-        defulatUseFontParams: boolean;
+        disableTextMesh: boolean;
+        defulatUseFontPreset: boolean;
     };
 }
 declare module "TextMesh/label/TextMeshAssembler" {
@@ -1359,6 +1366,18 @@ declare module "TextMesh/font/FontManager" {
         set material(value: Material);
         private canLoad;
     }
+    export class FontInfo {
+        fontName: string;
+        package: string;
+        /**
+         * font path
+         */
+        font: string;
+        /**
+         * Material
+         */
+        material: string;
+    }
     export class FontManager extends Component {
         private static _instance;
         static get instance(): FontManager;
@@ -1366,6 +1385,7 @@ declare module "TextMesh/font/FontManager" {
         private _loadingMap;
         private _registFontMap;
         private _registFonts;
+        static create(fonts: FontInfo[]): Promise<FontManager>;
         onLoad(): void;
         onFocusInEditor(): void;
         refresh(): void;
@@ -1376,10 +1396,11 @@ declare module "TextMesh/font/FontManager" {
         _loadFont(fontName: string): Promise<TMFont>;
         removeFont(fontName: string): void;
         protected onDestroy(): void;
+        showFontTexture(fontName: string): Promise<void>;
     }
 }
 declare module "TextMesh/label/TextMeshLabel" {
-    import { Color, EventTouch, Material, Node, Texture2D, UIRenderer, UITransform, __private } from "cc";
+    import { Color, EventTouch, Material, Node, SpriteFrame, Texture2D, UIRenderer, UITransform, __private } from "cc";
     import { TMFont } from "TextMesh/font/TMFont";
     import { TMQuadRenderData } from "TextMesh/vertex/TMRenderData";
     import { ITypeSet, LayoutResult } from "TextMesh/types/ITypeSet";
@@ -1387,7 +1408,8 @@ declare module "TextMesh/label/TextMeshLabel" {
     import { ETextDirection, ETextHorizontalAlign, ETextOverflow, ETextVerticalAlign, Margin } from "TextMesh/label/types";
     import { CharInfo } from "TextMesh/label/CharInfo";
     import { Slot, ESlotType } from "TextMesh/label/LayoutTypes";
-    type SlotHandlerType = (comp: TextMeshLabel, slotNode: Node, slot: Slot) => void;
+    export type SlotHandlerType = (comp: TextMeshLabel, slotNode: Node, slot: Slot) => void;
+    export type SlotSpriteFrameHandlerType = (comp: TextMeshLabel, slotNode: Node, slot: Slot) => SpriteFrame;
     export enum EDirtyFlag {
         None = 0,
         Text = 2,
@@ -1399,6 +1421,7 @@ declare module "TextMesh/label/TextMeshLabel" {
     export class TextMeshLabel extends UIRenderer {
         static CHAR_CLICK_EVENT: string;
         private _slotCreateHandlers;
+        private _slotSpriteFrameCreateHandler;
         private _saveTag;
         protected _fontName: string;
         protected _string: string;
@@ -1450,7 +1473,7 @@ declare module "TextMesh/label/TextMeshLabel" {
         protected _glowPower: number;
         protected _breakWestern: boolean;
         protected _enableBold: boolean;
-        protected _useFontParams: boolean;
+        protected _useFontPreset: boolean;
         private _style;
         private _clicks;
         private _slots;
@@ -1615,8 +1638,8 @@ declare module "TextMesh/label/TextMeshLabel" {
         set breakWestern(value: boolean);
         get enableBold(): boolean;
         set enableBold(value: boolean);
-        get useFontParams(): boolean;
-        set useFontParams(value: boolean);
+        get useFontPreset(): boolean;
+        set useFontPreset(value: boolean);
         get handleTouchEvent(): boolean;
         set handleTouchEvent(value: boolean);
         get uiTransform(): UITransform;
@@ -1653,6 +1676,7 @@ declare module "TextMesh/label/TextMeshLabel" {
         markForUpdateRenderData(enable?: boolean): void;
         updateRenderData(force?: boolean): void;
         setSlotCreateHandler(type: ESlotType, handler: SlotHandlerType): void;
+        setSlotSpriteFrameCreateHandler(handler: SlotSpriteFrameHandlerType): void;
         makeDirty(dirtyFlag: EDirtyFlag): void;
         private _updateOverlayTexture;
         private _updateGlow;
@@ -1669,6 +1693,7 @@ declare module "TextMesh/label/TextMeshLabel" {
         private _parseSlot;
         /**
          * slot 格式：[包名|resources目录无需包名][://资源路径|资源路径]
+         * 2.+ 修改格式为：db://[包名|resources目录无需包名]/资源路径
          * @param slot
          * @param fontSize
          * @returns
@@ -1710,13 +1735,16 @@ declare module "TextMesh/label/TextMeshLabel" {
     }
 }
 declare module "TextMesh/label/SuperLabel" {
-    import { Color, Component, Font, Label, Vec2 } from "cc";
-    import { TextMeshLabel } from "TextMesh/label/TextMeshLabel";
+    import { Color, Component, Font, Label, RichText, Vec2 } from "cc";
+    import { SlotSpriteFrameHandlerType, TextMeshLabel } from "TextMesh/label/TextMeshLabel";
     export class SuperLabel extends Component {
         private _ccLabel;
         private _outline;
         private _shadow;
+        private _ccRichText;
         private _textMeshLabel;
+        slotSpriteFrameCreateHandler: SlotSpriteFrameHandlerType;
+        private _richMode;
         private _textmeshMode;
         private _string;
         private _font;
@@ -1739,6 +1767,9 @@ declare module "TextMesh/label/SuperLabel" {
         private _stroke;
         get textmeshMode(): boolean;
         set textmeshMode(value: boolean);
+        get richMode(): boolean;
+        set richMode(value: boolean);
+        setMode(textmesh: boolean, rich: boolean): void;
         get string(): string;
         set string(value: string);
         get font(): Font;
@@ -1782,7 +1813,7 @@ declare module "TextMesh/label/SuperLabel" {
         onLoad(): void;
         buildLabel(): void;
         private _changeMode;
-        get label(): Label | TextMeshLabel;
+        get label(): Label | TextMeshLabel | RichText;
         private _applyLabelInfo;
     }
 }
@@ -1798,6 +1829,7 @@ declare module "TextMesh/index" {
     export * from "TextMesh/label/CharInfo";
     export * from "TextMesh/settings";
     export * from "TextMesh/label/SuperLabel";
+    export * from "TextMesh/font/FontManager";
 }
 declare module "TextMesh/label/TextMeshRenderData" {
     import { IRenderData, math } from "cc";

@@ -1,4 +1,4 @@
-import { gfx, UIRenderer, Event as Event$1, Vec2, Node, game, director, macro, Color, Layers, Font, resources, Vec3, Rect, UITransform, UIOpacity, Component, Graphics, misc, Sprite, isValid, Size, screen, view, assetManager, ImageAsset, AudioClip, BufferAsset, AssetManager, Asset, Texture2D, SpriteFrame, BitmapFont, sp, dragonBones, path, Label, InstanceMaterialType, SpriteAtlas, RichText, sys, EventMouse, EventTarget, Mask, math, View, AudioSourceComponent, EditBox, Overflow } from 'cc';
+import { gfx, UIRenderer, Event as Event$1, Vec2, Node, game, director, macro, Color, Layers, Font, resources, Vec3, Rect, UITransform, UIOpacity, Component, Graphics, misc, Sprite, isValid, Size, screen, view, assetManager, ImageAsset, AudioClip, BufferAsset, AssetManager, Asset, Texture2D, SpriteFrame, BitmapFont, sp, dragonBones, path, Label, InstanceMaterialType, SpriteAtlas, sys, EventMouse, EventTarget, Mask, math, View, AudioSourceComponent, EditBox, Overflow } from 'cc';
 import { EDITOR } from 'cc/env';
 
 var ButtonMode;
@@ -6642,7 +6642,9 @@ class GTextField extends GObject {
     }
     ensureSizeCorrect() {
         if (this._sizeDirty && this._label.label) {
-            this._label.label.updateRenderData(true);
+            if ("updateRenderData" in this._label.label) {
+                this._label.label.updateRenderData(true);
+            }
             this._sizeDirty = false;
         }
     }
@@ -6905,16 +6907,24 @@ class GRichTextField extends GTextField {
         this.linkUnderline = UIConfig.linkUnderline;
     }
     createRenderer() {
-        this._richText = this._node.addComponent(RichText);
-        this._richText.handleTouchEvent = false;
+        super.createRenderer();
         this.autoSize = AutoSizeType.None;
-        this._richText.imageAtlas = imageAtlas;
+        this._label.richMode = true;
+        this._label.slotSpriteFrameCreateHandler = this.getSpriteFrame.bind(this);
+    }
+    getSpriteFrame(comp, slotNode, slot) {
+        if (UIConfig.enableDelayLoad) {
+            return imageAtlas.getSpriteFrameAsync(slot.src);
+        }
+        else {
+            return imageAtlas.getSpriteFrame(slot.src);
+        }
     }
     get align() {
-        return this._richText.horizontalAlign;
+        return this._label.horizontalAlign;
     }
     set align(value) {
-        this._richText.horizontalAlign = value;
+        this._label.horizontalAlign = value;
     }
     get underline() {
         return this._underline;
@@ -6964,44 +6974,36 @@ class GRichTextField extends GTextField {
         let c = this._color;
         if (this._grayed)
             c = toGrayedColor(c);
-        text2 = "<color=" + c.toHEX("#rrggbb") + ">" + text2 + "</color>";
-        if (this._autoSize == AutoSizeType.Both) {
-            if (this._richText.maxWidth != 0)
-                this._richText["_maxWidth"] = 0;
-            this._richText.string = text2;
-            if (this.maxWidth != 0 && this._node._uiProps.uiTransformComp.contentSize.width > this.maxWidth)
-                this._richText.maxWidth = this.maxWidth;
+        text2 = "<color=0x" + c.toHEX("#rrggbbaa") + ">" + text2 + "</color>";
+        if (this._autoSize != AutoSizeType.Both) {
+            this._label.string = text2;
         }
-        else
-            this._richText.string = text2;
     }
     updateFont() {
-        this.assignFont(this._richText, this._realFont);
+        if (this._realFont instanceof Font) {
+            this._label.setMode(false, true);
+            this.assignFont(this._label, this._realFont);
+        }
+        else {
+            this._label.fontName = this._realFont;
+        }
     }
     updateFontColor() {
-        this.assignFontColor(this._richText, this._color);
+        this.assignFontColor(this._label, this._color);
     }
     updateFontSize() {
         let fontSize = this._fontSize;
-        let font = this._richText.font;
+        let font = this._label.font;
         if (font instanceof BitmapFont) {
             if (!font.fntConfig.resizable)
                 fontSize = font.fntConfig.fontSize;
         }
-        this._richText.fontSize = fontSize;
-        this._richText.lineHeight = fontSize + this._leading * 2;
+        this._label.fontSize = fontSize;
+        this._label.lineHeight = fontSize + this._leading * 2;
     }
     updateOverflow() {
-        if (this._autoSize == AutoSizeType.Both)
-            this._richText.maxWidth = 0;
-        else
-            this._richText.maxWidth = this._width;
     }
     handleSizeChanged() {
-        if (this._updatingSize)
-            return;
-        if (this._autoSize != AutoSizeType.Both)
-            this._richText.maxWidth = this._width;
     }
 }
 
@@ -7187,8 +7189,13 @@ class InputProcessor extends Component {
         }
         ti.touchMonitors.length = 0;
         if (ti.target && ti.target.node) {
-            if (ti.target instanceof GRichTextField)
-                ti.target.node.getComponent(RichText)["_onTouchEnded"](evt);
+            if (ti.target instanceof GRichTextField) {
+                // ti.target.node.getComponent(RichText)["_onTouchEnded"](evt);
+                const label = ti.target._label.label;
+                if (label && "_onTouchEnded" in label) {
+                    label["_onTouchEnded"](evt);
+                }
+            }
             evt2.unuse();
             evt2.type = Event.TOUCH_END;
             evt2.bubbles = true;

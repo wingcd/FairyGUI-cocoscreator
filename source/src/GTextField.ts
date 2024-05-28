@@ -395,7 +395,9 @@ export class GTextField extends GObject {
 
     public ensureSizeCorrect(): void {
         if (this._sizeDirty && this._label.label) {
-            this._label.label.updateRenderData(true);
+            if("updateRenderData" in this._label.label) {
+                this._label.label.updateRenderData(true);
+            }
             this._sizeDirty = false;
         }
     }

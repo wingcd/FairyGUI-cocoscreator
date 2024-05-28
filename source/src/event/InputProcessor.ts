@@ -238,8 +238,13 @@ export class InputProcessor extends Component {
         ti.touchMonitors.length = 0;
 
         if (ti.target && ti.target.node) {
-            if (ti.target instanceof GRichTextField)
-                ti.target.node.getComponent(RichText)["_onTouchEnded"](evt);
+            if (ti.target instanceof GRichTextField) {
+                // ti.target.node.getComponent(RichText)["_onTouchEnded"](evt);
+                const label = ti.target._label.label;
+                if(label  && "_onTouchEnded" in label) {
+                    label["_onTouchEnded"](evt);
+                }
+            }
 
             evt2.unuse();
             evt2.type = FUIEvent.TOUCH_END;

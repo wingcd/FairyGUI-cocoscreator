@@ -1,11 +1,11 @@
-import { BitmapFont, HorizontalTextAlignment, Label, RichText, SpriteAtlas, SpriteFrame } from "cc";
+import { BitmapFont, Font, HorizontalTextAlignment, Label, Node, RichText, SpriteAtlas, SpriteFrame } from "cc";
 import { PackageItemType, AutoSizeType } from "./FieldTypes";
 import { GTextField } from "./GTextField";
 import { PackageItem } from "./PackageItem";
 import { UIConfig } from "./UIConfig";
 import { UIPackage } from "./UIPackage";
 import { toGrayedColor } from "./utils/ToolSet";
-import { defaultParser, UBBParser } from "./utils/UBBParser";
+import { defaultParser } from "./utils/UBBParser";
 
 export class RichTextImageAtlas extends SpriteAtlas {
 
@@ -39,8 +39,6 @@ export class RichTextImageAtlas extends SpriteAtlas {
 const imageAtlas: RichTextImageAtlas = new RichTextImageAtlas();
 
 export class GRichTextField extends GTextField {
-    public _richText: RichText;
-
     private _bold: boolean;
     private _italics: boolean;
     private _underline: boolean;
@@ -57,18 +55,26 @@ export class GRichTextField extends GTextField {
     }
 
     protected createRenderer() {
-        this._richText = this._node.addComponent(RichText);
-        this._richText.handleTouchEvent = false;
+        super.createRenderer();
         this.autoSize = AutoSizeType.None;
-        this._richText.imageAtlas = imageAtlas;
+        this._label.richMode = true;
+        this._label.slotSpriteFrameCreateHandler = this.getSpriteFrame.bind(this);
+    }
+
+    private getSpriteFrame(comp: any, slotNode: Node, slot: any): SpriteFrame | Promise<SpriteFrame> {
+        if(UIConfig.enableDelayLoad) {
+            return imageAtlas.getSpriteFrameAsync(slot.src);
+        }else{
+            return imageAtlas.getSpriteFrame(slot.src);
+        }
     }
 
     public get align(): HorizontalTextAlignment {
-        return this._richText.horizontalAlign;
+        return this._label.horizontalAlign;
     }
 
     public set align(value: HorizontalTextAlignment) {
-        this._richText.horizontalAlign = value;
+        this._label.horizontalAlign = value;
     }
 
     public get underline(): boolean {
@@ -133,51 +139,43 @@ export class GRichTextField extends GTextField {
         let c = this._color
         if (this._grayed)
             c = toGrayedColor(c);
-        text2 = "<color=" + c.toHEX("#rrggbb") + ">" + text2 + "</color>";
+        text2 = "<color=0x" + c.toHEX("#rrggbbaa") + ">" + text2 + "</color>";
 
-        if (this._autoSize == AutoSizeType.Both) {
-            if (this._richText.maxWidth != 0)
-                this._richText["_maxWidth"] = 0;
-            this._richText.string = text2;
-            if (this.maxWidth != 0 && this._node._uiProps.uiTransformComp.contentSize.width > this.maxWidth)
-                this._richText.maxWidth = this.maxWidth;
+        if (this._autoSize != AutoSizeType.Both) {
+            this._label.string = text2;
         }
-        else
-            this._richText.string = text2;
     }
 
     protected updateFont() {
-        this.assignFont(this._richText, this._realFont);
+        if(this._realFont instanceof Font) {
+            this._label.setMode(false, true);
+            this.assignFont(this._label, this._realFont);
+        }else{
+            this._label.fontName = this._realFont;
+        }
     }
 
     protected updateFontColor() {
-        this.assignFontColor(this._richText, this._color);
+        this.assignFontColor(this._label, this._color);
     }
 
     protected updateFontSize() {
         let fontSize: number = this._fontSize;
-        let font: any = this._richText.font;
+        let font: any = this._label.font;
         if (font instanceof BitmapFont) {
             if (!font.fntConfig.resizable)
                 fontSize = font.fntConfig.fontSize;
         }
 
-        this._richText.fontSize = fontSize;
-        this._richText.lineHeight = fontSize + this._leading * 2;
+        this._label.fontSize = fontSize;
+        this._label.lineHeight = fontSize + this._leading * 2;
     }
 
     protected updateOverflow() {
-        if (this._autoSize == AutoSizeType.Both)
-            this._richText.maxWidth = 0;
-        else
-            this._richText.maxWidth = this._width;
+        
     }
 
     protected handleSizeChanged(): void {
-        if (this._updatingSize)
-            return;
-
-        if (this._autoSize != AutoSizeType.Both)
-            this._richText.maxWidth = this._width;
+        
     }
 }
