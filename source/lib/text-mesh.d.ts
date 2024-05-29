@@ -516,8 +516,9 @@ declare module "TextMesh/label/LayoutTypes" {
     export function isSlotType(type: string): boolean;
     export enum ESlotSizeType {
         None = 0,
-        HeightFirst = 1,
-        WidthFirst = 2
+        FontSize = 1,
+        HeightFirst = 2,
+        WidthFirst = 3
     }
     export class Slot {
         index: number;
@@ -607,10 +608,12 @@ declare module "TextMesh/label/CharInfo" {
         shadowChar: CharInfo;
         addVertex(): CharVertex;
         copyFrom(charInfo: CharInfo): void;
+        clear(): void;
         reset(): void;
     }
     export function putCharInfoToPool(charInfo: CharInfo): void;
     export function getCharInfoFromPool(): CharInfo;
+    export function resetCharInfo(charInfo: any): void;
 }
 declare module "TextMesh/types/IFontData" {
     import { Texture2D } from "cc";
@@ -1400,7 +1403,7 @@ declare module "TextMesh/font/FontManager" {
     }
 }
 declare module "TextMesh/label/TextMeshLabel" {
-    import { Color, EventTouch, Material, Node, SpriteFrame, Texture2D, UIRenderer, UITransform, __private } from "cc";
+    import { Color, EventTouch, Material, Node, Prefab, SpriteFrame, Texture2D, UIRenderer, UITransform, __private } from "cc";
     import { TMFont } from "TextMesh/font/TMFont";
     import { TMQuadRenderData } from "TextMesh/vertex/TMRenderData";
     import { ITypeSet, LayoutResult } from "TextMesh/types/ITypeSet";
@@ -1409,19 +1412,22 @@ declare module "TextMesh/label/TextMeshLabel" {
     import { CharInfo } from "TextMesh/label/CharInfo";
     import { Slot, ESlotType } from "TextMesh/label/LayoutTypes";
     export type SlotHandlerType = (comp: TextMeshLabel, slotNode: Node, slot: Slot) => void;
-    export type SlotSpriteFrameHandlerType = (comp: TextMeshLabel, slotNode: Node, slot: Slot) => SpriteFrame;
+    export type SlotSpriteFrameHandlerType = (name: string) => SpriteFrame;
+    export type SlotPrefabHandlerType = (name: string) => Prefab;
     export enum EDirtyFlag {
         None = 0,
         Text = 2,
         Style = 4,
         Layout = 8,
         Property = 16,
-        All = 30
+        Slot = 32,
+        All = 62
     }
     export class TextMeshLabel extends UIRenderer {
         static CHAR_CLICK_EVENT: string;
         private _slotCreateHandlers;
         private _slotSpriteFrameCreateHandler;
+        private _slotPrefabCreateHandler;
         private _saveTag;
         protected _fontName: string;
         protected _string: string;
@@ -1677,6 +1683,7 @@ declare module "TextMesh/label/TextMeshLabel" {
         updateRenderData(force?: boolean): void;
         setSlotCreateHandler(type: ESlotType, handler: SlotHandlerType): void;
         setSlotSpriteFrameCreateHandler(handler: SlotSpriteFrameHandlerType): void;
+        setSlotPrefabCreateHandler(handler: SlotPrefabHandlerType): void;
         makeDirty(dirtyFlag: EDirtyFlag): void;
         private _updateOverlayTexture;
         private _updateGlow;
@@ -1686,8 +1693,11 @@ declare module "TextMesh/label/TextMeshLabel" {
         private _updateLayout;
         forceUpdate(): void;
         private _updateText;
+        private _resetTex;
         _clearAdditions(): void;
+        private _resetAdditions;
         private _freeCharInfos;
+        private _resetAllCharInfos;
         private _clearSlots;
         private _parse;
         private _parseSlot;
@@ -1735,7 +1745,7 @@ declare module "TextMesh/label/TextMeshLabel" {
     }
 }
 declare module "TextMesh/label/SuperLabel" {
-    import { Color, Component, Font, Label, RichText, Vec2 } from "cc";
+    import { Color, Component, Font, Label, RichText, SpriteAtlas, Vec2 } from "cc";
     import { SlotSpriteFrameHandlerType, TextMeshLabel } from "TextMesh/label/TextMeshLabel";
     export class SuperLabel extends Component {
         private _ccLabel;
@@ -1765,6 +1775,7 @@ declare module "TextMesh/label/SuperLabel" {
         private _shadowBlur;
         private _shadowOffset;
         private _stroke;
+        imageAtlas: SpriteAtlas;
         get textmeshMode(): boolean;
         set textmeshMode(value: boolean);
         get richMode(): boolean;

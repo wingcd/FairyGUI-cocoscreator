@@ -12,6 +12,7 @@
  */
 
 import { _decorator, Node, director, Director, game, BaseNode, Canvas, Camera } from 'cc';
+import LRU from "lru-cache";
 
 const customLayerMask = 0x000fffff;
 const builtinLayerMask = 0xfff00000;

@@ -6910,14 +6910,16 @@ class GRichTextField extends GTextField {
         super.createRenderer();
         this.autoSize = AutoSizeType.None;
         this._label.richMode = true;
+        this._label.imageAtlas = imageAtlas;
+        this.singleLine = false;
         this._label.slotSpriteFrameCreateHandler = this.getSpriteFrame.bind(this);
     }
-    getSpriteFrame(comp, slotNode, slot) {
+    getSpriteFrame(name) {
         if (UIConfig.enableDelayLoad) {
-            return imageAtlas.getSpriteFrameAsync(slot.src);
+            return imageAtlas.getSpriteFrameAsync(name);
         }
         else {
-            return imageAtlas.getSpriteFrame(slot.src);
+            return imageAtlas.getSpriteFrame(name);
         }
     }
     get align() {
