@@ -6908,10 +6908,8 @@ class GRichTextField extends GTextField {
     }
     createRenderer() {
         super.createRenderer();
-        this.autoSize = AutoSizeType.None;
         this._label.richMode = true;
         this._label.imageAtlas = imageAtlas;
-        this.singleLine = false;
         this._label.slotSpriteFrameCreateHandler = this.getSpriteFrame.bind(this);
     }
     getSpriteFrame(name) {
@@ -6954,9 +6952,6 @@ class GRichTextField extends GTextField {
             this._italics = value;
             this.updateText();
         }
-    }
-    markSizeChanged() {
-        //RichText貌似没有延迟重建文本，所以这里不需要
     }
     updateText() {
         var text2 = this._text;
@@ -7003,9 +6998,9 @@ class GRichTextField extends GTextField {
         this._label.fontSize = fontSize;
         this._label.lineHeight = fontSize + this._leading * 2;
     }
-    updateOverflow() {
-    }
-    handleSizeChanged() {
+    setup_afterAdd(buffer, beginPos) {
+        super.setup_afterAdd(buffer, beginPos);
+        this.autoSize = AutoSizeType.Height;
     }
 }
 

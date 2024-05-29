@@ -6,6 +6,7 @@ import { UIConfig } from "./UIConfig";
 import { UIPackage } from "./UIPackage";
 import { toGrayedColor } from "./utils/ToolSet";
 import { defaultParser } from "./utils/UBBParser";
+import { ByteBuffer } from "./FairyGUI";
 
 export class RichTextImageAtlas extends SpriteAtlas {
 
@@ -56,10 +57,8 @@ export class GRichTextField extends GTextField {
 
     protected createRenderer() {
         super.createRenderer();
-        this.autoSize = AutoSizeType.None;
         this._label.richMode = true;
-        this._label.imageAtlas = imageAtlas;      
-        this.singleLine = false;        
+        this._label.imageAtlas = imageAtlas;  
         this._label.slotSpriteFrameCreateHandler = this.getSpriteFrame.bind(this);
     }
 
@@ -113,10 +112,6 @@ export class GRichTextField extends GTextField {
 
             this.updateText();
         }
-    }
-
-    protected markSizeChanged(): void {
-        //RichText貌似没有延迟重建文本，所以这里不需要
     }
 
     protected updateText(): void {
@@ -173,11 +168,9 @@ export class GRichTextField extends GTextField {
         this._label.lineHeight = fontSize + this._leading * 2;
     }
 
-    protected updateOverflow() {
-        
-    }
-
-    protected handleSizeChanged(): void {
-        
+    public setup_afterAdd(buffer: ByteBuffer, beginPos: number): void {
+        super.setup_afterAdd(buffer, beginPos);
+                
+        this.autoSize = AutoSizeType.Height;
     }
 }
