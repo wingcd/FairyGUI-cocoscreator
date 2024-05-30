@@ -58,7 +58,7 @@ export class GRichTextField extends GTextField {
     protected createRenderer() {
         super.createRenderer();
         this._label.richMode = true;
-        this._label.imageAtlas = imageAtlas;  
+        this._label.imageAtlas = imageAtlas;
         this._label.slotSpriteFrameCreateHandler = this.getSpriteFrame.bind(this);
     }
 
@@ -136,7 +136,7 @@ export class GRichTextField extends GTextField {
         let c = this._color
         if (this._grayed)
             c = toGrayedColor(c);
-        text2 = "<color=0x" + c.toHEX("#rrggbbaa") + ">" + text2 + "</color>";
+        text2 = "<color=" + c.toHEX("#rrggbb") + ">" + text2 + "</color>";
 
         if (this._autoSize != AutoSizeType.Both) {
             this._label.string = text2;
@@ -145,8 +145,8 @@ export class GRichTextField extends GTextField {
 
     protected updateFont() {
         if(this._realFont instanceof Font) {
-            this._label.setMode(false, true);
             this.assignFont(this._label, this._realFont);
+            this._label.setMode(false, true);
         }else{
             this._label.fontName = this._realFont;
         }

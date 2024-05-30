@@ -6355,12 +6355,7 @@ class GTextField extends GObject {
         this._touchDisabled = true;
         this._text = "";
         this._color = new Color(255, 255, 255, 255);
-        this.createRenderer();
-        this.fontSize = 12;
-        this.leading = 3;
-        this.singleLine = false;
         this._sizeDirty = false;
-        this._node.on(Node.EventType.SIZE_CHANGED, this.onLabelSizeChanged, this);
     }
     createRenderer() {
         //@ts-ignore
@@ -6369,6 +6364,11 @@ class GTextField extends GObject {
         // this._label.getComponent(UITransform).setAnchorPoint(0, 1);
         this.autoSize = AutoSizeType.Both;
         this.bold = false;
+        this._label.textmeshMode = this._font ? !this._font.startsWith("ui://") : true;
+        this.fontSize = 12;
+        this.leading = 3;
+        this.singleLine = false;
+        this._node.on(Node.EventType.SIZE_CHANGED, this.onLabelSizeChanged, this);
     }
     set text(value) {
         this._text = value;
@@ -6671,9 +6671,24 @@ class GTextField extends GObject {
             }
         }
         else if (label instanceof SuperLabel) {
-            if (value instanceof Font)
+            if (value instanceof Font) {
+                label.font = value;
                 return;
-            label.fontName = value;
+            }
+            else {
+                if (label.textmeshMode && typeof value == "string") {
+                    label.fontName = value;
+                }
+                else {
+                    let font = getFontByName(value);
+                    if (!font) {
+                        label.fontName = value;
+                    }
+                    else {
+                        label.font = font;
+                    }
+                }
+            }
         }
         this.updateFontColor();
     }
@@ -6695,9 +6710,7 @@ class GTextField extends GObject {
                     value = toGrayedColor(value);
             }
         }
-        else if (label instanceof SuperLabel) {
-            label.color = value;
-        }
+        else if (label instanceof SuperLabel) ;
         else {
             if (this._grayed)
                 value = toGrayedColor(value);
@@ -6825,7 +6838,11 @@ class GTextField extends GObject {
     setup_beforeAdd(buffer, beginPos) {
         super.setup_beforeAdd(buffer, beginPos);
         buffer.seek(beginPos, 5);
-        this.font = buffer.readS();
+        this._font = buffer.readS();
+        this.createRenderer();
+        let font = this._font;
+        this._font = null;
+        this.font = font;
         this.fontSize = buffer.readShort();
         this.color = buffer.readColor();
         this.align = buffer.readByte();
@@ -6971,15 +6988,15 @@ class GRichTextField extends GTextField {
         let c = this._color;
         if (this._grayed)
             c = toGrayedColor(c);
-        text2 = "<color=0x" + c.toHEX("#rrggbbaa") + ">" + text2 + "</color>";
+        text2 = "<color=" + c.toHEX("#rrggbb") + ">" + text2 + "</color>";
         if (this._autoSize != AutoSizeType.Both) {
             this._label.string = text2;
         }
     }
     updateFont() {
         if (this._realFont instanceof Font) {
-            this._label.setMode(false, true);
             this.assignFont(this._label, this._realFont);
+            this._label.setMode(false, true);
         }
         else {
             this._label.fontName = this._realFont;

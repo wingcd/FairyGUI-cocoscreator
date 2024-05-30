@@ -1,4 +1,4 @@
-import { BitmapFont, Color, Font, HorizontalTextAlignment, InstanceMaterialType, Label, LabelOutline, LabelShadow, Node, SystemEventType, UIRenderer, Vec2, VerticalTextAlignment, isValid, math } from "cc";
+import { BitmapFont, Color, Font, HorizontalTextAlignment, InstanceMaterialType, Label, LabelOutline, LabelShadow, Node, RichText, SystemEventType, UIRenderer, Vec2, VerticalTextAlignment, isValid, math } from "cc";
 import { Event as FUIEvent } from "./event/Event";
 import { AutoSizeType, ObjectPropID } from "./FieldTypes";
 import { GObject } from "./GObject";
@@ -44,16 +44,7 @@ export class GTextField extends GObject {
 
         this._text = "";
         this._color = new Color(255, 255, 255, 255);
-
-        this.createRenderer();
-
-        this.fontSize = 12;
-        this.leading = 3;
-        this.singleLine = false;
-
         this._sizeDirty = false;
-
-        this._node.on(Node.EventType.SIZE_CHANGED, this.onLabelSizeChanged, this);
     }
 
     protected createRenderer() {
@@ -63,6 +54,12 @@ export class GTextField extends GObject {
         // this._label.getComponent(UITransform).setAnchorPoint(0, 1);
         this.autoSize = AutoSizeType.Both;
         this.bold = false;
+        this._label.textmeshMode = this._font ? !this._font.startsWith("ui://") : true;    
+
+        this.fontSize = 12;
+        this.leading = 3;
+        this.singleLine = false;
+        this._node.on(Node.EventType.SIZE_CHANGED, this.onLabelSizeChanged, this);
     }
 
     public set text(value: string | null) {
@@ -427,8 +424,21 @@ export class GTextField extends GObject {
                     label.font = font;
             }
         }else if(label instanceof SuperLabel){
-            if(value instanceof Font) return;            
-            label.fontName = value;
+            if(value instanceof Font) {
+                label.font = value;
+                return;       
+            }else{
+                if(label.textmeshMode && typeof value == "string") {
+                    label.fontName = value;
+                }else{
+                    let font = getFontByName(<string>value);
+                    if (!font) {
+                        label.fontName = value;
+                    }else{
+                        label.font = font;
+                    }
+                }
+            }     
         }
 
         this.updateFontColor();
@@ -452,7 +462,7 @@ export class GTextField extends GObject {
                     value = toGrayedColor(value);
             }            
         }else if(label instanceof SuperLabel){
-            label.color = value;
+            
         }else{
             if (this._grayed) 
                 value = toGrayedColor(value);
@@ -600,7 +610,12 @@ export class GTextField extends GObject {
 
         buffer.seek(beginPos, 5);
 
-        this.font = buffer.readS();
+        this._font = buffer.readS();
+        this.createRenderer();
+        let font = this._font;
+        this._font = null;
+        this.font = font;
+
         this.fontSize = buffer.readShort();
         this.color = buffer.readColor();
         this.align = buffer.readByte();

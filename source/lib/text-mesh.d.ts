@@ -38,6 +38,7 @@ declare module "TextMesh/font/FontParser" {
         atlasHeight?: number;
         dynamic?: number;
         staticChannels?: number;
+        enableAutoFree?: number;
         normalWeight?: number;
         boldWeightScale?: number;
         strokeScale?: number;
@@ -82,6 +83,8 @@ declare module "TextMesh/font/Char" {
     export class Char implements IChar {
         static: boolean;
         code: string;
+        ref: number;
+        index: number;
         /**
          * 左下，右下，左上，右上
          */
@@ -613,7 +616,7 @@ declare module "TextMesh/label/CharInfo" {
     }
     export function putCharInfoToPool(charInfo: CharInfo): void;
     export function getCharInfoFromPool(): CharInfo;
-    export function resetCharInfo(charInfo: any): void;
+    export function resetCharInfo(charInfo: CharInfo, clearAll?: boolean): void;
 }
 declare module "TextMesh/types/IFontData" {
     import { Texture2D } from "cc";
@@ -655,7 +658,6 @@ declare module "TextMesh/types/ITMFont" {
         strikeThickness?: number;
         scriptThickness?: number;
         getCharInfo(code: string): Char;
-        removeDynamicChar(code: string): void;
     }
 }
 declare module "TextMesh/font/TextureChannel" {
@@ -672,22 +674,25 @@ declare module "TextMesh/font/TextureChannel" {
         private _size;
         private _lru;
         private _disposedSpaces;
-        private _count;
+        private _fullIndices;
+        private _initialized;
+        get initialized(): boolean;
         get index(): number;
         get isDynamic(): boolean;
         get count(): number;
         get rowSize(): number;
         get colSize(): number;
         get capacity(): number;
-        get lru(): LRU<string, SpaceInfo>;
-        constructor(tmFont: ITMFont, index: number, isDynamic: boolean, lru?: LRU<string, SpaceInfo>);
+        get lru(): LRU<number, SpaceInfo>;
+        initial(): void;
+        constructor(tmFont: ITMFont, index: number, isDynamic: boolean, lru?: LRU<number, SpaceInfo>);
+        removeChar(index: number): void;
         isFull(): boolean;
         /**
          * 分配新的字符空位
-         * @param code 字符编码
          * @returns 空位信息
          */
-        spanEmptySpace(code: string): SpaceInfo;
+        spanEmptySpace(): SpaceInfo;
     }
 }
 declare module "TextMesh/utils/CanvasPool" {
@@ -895,6 +900,7 @@ declare module "TextMesh/font/TMFont" {
         private _staticChannels;
         private _dynamic;
         private _padTrim;
+        private _enableAutoFree;
         private _normalWeight;
         private _boldWeightScale;
         private _strokeScale;
@@ -921,6 +927,7 @@ declare module "TextMesh/font/TMFont" {
         get dynamic(): boolean;
         get staticChannels(): number;
         get fontData(): IFontData;
+        get enableAutoFree(): boolean;
         get normalWeight(): number;
         get boldWeightScale(): number;
         get strokeScale(): number;
@@ -940,7 +947,7 @@ declare module "TextMesh/font/TMFont" {
         constructor();
         initial(font?: TTFFont, texture?: Texture2D, tmfInfo?: TMFontInfo): void;
         getCharInfo(code: string): Char;
-        removeDynamicChar(code: string): void;
+        freeChar(char: Char): void;
         private _loadFontInfo;
         private isNone;
         static deserializeAsync(data: string | TextAsset | ArrayBuffer | BufferAsset, material?: Material): Promise<TMFont>;
@@ -1412,8 +1419,8 @@ declare module "TextMesh/label/TextMeshLabel" {
     import { CharInfo } from "TextMesh/label/CharInfo";
     import { Slot, ESlotType } from "TextMesh/label/LayoutTypes";
     export type SlotHandlerType = (comp: TextMeshLabel, slotNode: Node, slot: Slot) => void;
-    export type SlotSpriteFrameHandlerType = (name: string) => SpriteFrame;
-    export type SlotPrefabHandlerType = (name: string) => Prefab;
+    export type SlotSpriteFrameHandlerType = (name: string) => SpriteFrame | Promise<SpriteFrame>;
+    export type SlotPrefabHandlerType = (name: string) => Prefab | Promise<Prefab>;
     export enum EDirtyFlag {
         None = 0,
         Text = 2,
@@ -1493,6 +1500,8 @@ declare module "TextMesh/label/TextMeshLabel" {
         private _dirtyFlag;
         private _uiTransform;
         private _ready;
+        private _slotCount;
+        private _needUpdateAfterSlotLoaded;
         get ready(): boolean;
         get slots(): Slot[];
         private incrSaveTag;
@@ -1529,6 +1538,7 @@ declare module "TextMesh/label/TextMeshLabel" {
         private _maskInfos;
         get maskInfos(): TMQuadRenderData[];
         private _charInfos;
+        private _tempCharInfos;
         get charInfos(): CharInfo[];
         private _typeSet;
         get typeSet(): ITypeSet;
@@ -1696,6 +1706,7 @@ declare module "TextMesh/label/TextMeshLabel" {
         private _resetTex;
         _clearAdditions(): void;
         private _resetAdditions;
+        private _preFreeCharInfos;
         private _freeCharInfos;
         private _resetAllCharInfos;
         private _clearSlots;
