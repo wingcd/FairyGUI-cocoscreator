@@ -6348,6 +6348,7 @@ class GTextField extends GObject {
         super();
         this._fontSize = 0;
         this._leading = 0;
+        this._autoSize = AutoSizeType.None;
         this._dirtyVersion = 0;
         this._isBold = false;
         this._stroke = 0;

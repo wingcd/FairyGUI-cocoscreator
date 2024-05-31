@@ -28,7 +28,7 @@ export class GTextField extends GObject {
     protected _text: string;
     protected _ubbEnabled: boolean;
     protected _templateVars?: { [index: string]: string };
-    protected _autoSize: AutoSizeType;
+    protected _autoSize: AutoSizeType = AutoSizeType.None;
     protected _updatingSize: boolean;
     protected _sizeDirty: boolean;
     protected _fontPackageItem?: PackageItem;
