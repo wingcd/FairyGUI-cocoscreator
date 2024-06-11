@@ -138,9 +138,7 @@ export class GRichTextField extends GTextField {
             c = toGrayedColor(c);
         text2 = "<color=" + c.toHEX("#rrggbb") + ">" + text2 + "</color>";
 
-        if (this._autoSize != AutoSizeType.Both) {
-            this._label.string = text2;
-        }
+        this._label.string = text2;
     }
 
     protected updateFont() {
@@ -157,6 +155,8 @@ export class GRichTextField extends GTextField {
     }
 
     protected updateFontSize() {
+        super.updateFontSize();
+
         let fontSize: number = this._fontSize;
         let font: any = this._label.font;
         if (font instanceof BitmapFont) {
@@ -166,11 +166,5 @@ export class GRichTextField extends GTextField {
 
         this._label.fontSize = fontSize;
         this._label.lineHeight = fontSize + this._leading * 2;
-    }
-
-    public setup_afterAdd(buffer: ByteBuffer, beginPos: number): void {
-        super.setup_afterAdd(buffer, beginPos);
-                
-        this.autoSize = AutoSizeType.Height;
     }
 }

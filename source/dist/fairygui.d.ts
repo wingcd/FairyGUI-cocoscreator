@@ -541,7 +541,6 @@ declare module 'fairygui-cc/GTextField' {
 declare module 'fairygui-cc/GRichTextField' {
     import { HorizontalTextAlignment, SpriteAtlas, SpriteFrame } from "cc";
     import { GTextField } from "fairygui-cc/GTextField";
-    import { ByteBuffer } from "fairygui-cc/FairyGUI";
     export class RichTextImageAtlas extends SpriteAtlas {
         getSpriteFrame(key: string): SpriteFrame;
         getSpriteFrameAsync(key: string): Promise<SpriteFrame>;
@@ -563,7 +562,6 @@ declare module 'fairygui-cc/GRichTextField' {
         protected updateFont(): void;
         protected updateFontColor(): void;
         protected updateFontSize(): void;
-        setup_afterAdd(buffer: ByteBuffer, beginPos: number): void;
     }
 }
 
