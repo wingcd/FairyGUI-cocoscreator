@@ -1,4 +1,4 @@
-import { Asset, assetManager, Color, ImageAsset, isValid, Node, resources, Sprite, SpriteFrame, sys, Texture2D, UITransform, Vec2 } from "cc";
+import { Asset, assetManager, Color, ImageAsset, isValid, Node, Pool, resources, Sprite, SpriteFrame, sys, Texture2D, UITransform, Vec2 } from "cc";
 import { MovieClip } from "./display/MovieClip";
 import { AlignType, VertAlignType, LoaderFillType, FillMethod, FillOrigin, PackageItemType, ObjectPropID } from "./FieldTypes";
 import { GComponent } from "./GComponent";
@@ -8,6 +8,8 @@ import { PackageItem } from "./PackageItem";
 import { UIConfig } from "./UIConfig";
 import { UIPackage } from "./UIPackage";
 import { ByteBuffer } from "./utils/ByteBuffer";
+
+const SpritePool = new Pool<SpriteFrame>(() => new SpriteFrame(), 1);
 
 export class GLoader extends GObject {
     public _content: MovieClip;
@@ -359,7 +361,7 @@ export class GLoader extends GObject {
             if (asset instanceof SpriteFrame)
                 this.onExternalLoadSuccess(asset);
             else if (asset instanceof Texture2D) {
-                let sp = new SpriteFrame();
+                let sp = SpritePool.alloc();
                 sp.texture = asset;
                 assets.push(sp);
                 this.onExternalLoadSuccess(sp);
@@ -374,7 +376,7 @@ export class GLoader extends GObject {
                     });
                     tex.uploadData(asset.data);
                 }
-                let sp = new SpriteFrame();
+                let sp = SpritePool.alloc();
                 sp.texture = tex;
                 assets.push(tex);
                 assets.push(sp);
@@ -425,23 +427,18 @@ export class GLoader extends GObject {
 
             const assets = this._externalAssets[key];
             const asset = assets[0];
-            for(let i = 1; i < assets.length; i++) {
+            for(let i = 0; i < assets.length; i++) {
                 let asset = assets[i];
                 asset.decRef(UIConfig.autoReleaseAssets);
             }
 
             if (asset.refCount <= 0 && UIConfig.autoReleaseAssets) {
-                assetManager.releaseAsset(asset);
-
-                if (key.startsWith("http://")
-                    || key.startsWith("https://")
-                    || key.startsWith('/')) {
-
-                }
-                else {
-                    for(let i = 1; i < assets.length; i++) {
-                        let asset = assets[i];
-                        if (asset.refCount <= 0) {
+                for(let i = 1; i < assets.length; i++) {
+                    let asset = assets[i];
+                    if (asset.refCount <= 0) {
+                        if(asset instanceof SpriteFrame) {
+                            SpritePool.free(asset);
+                        }else{
                             assetManager.releaseAsset(asset);
                         }
                     }

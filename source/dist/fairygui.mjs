@@ -1,4 +1,4 @@
-import { gfx, UIRenderer, Event as Event$1, Vec2, Node, game, director, macro, Color, Layers, Font, resources, Vec3, Rect, UITransform, UIOpacity, Component, Graphics, misc, Sprite, isValid, Size, screen, view, assetManager, ImageAsset, AudioClip, BufferAsset, AssetManager, Asset, Texture2D, SpriteFrame, BitmapFont, sp, dragonBones, path, Label, LabelOutline, LabelShadow, InstanceMaterialType, SpriteAtlas, RichText, sys, EventMouse, EventTarget, Mask, math, View, AudioSourceComponent, EditBox, Overflow } from 'cc';
+import { gfx, UIRenderer, Event as Event$1, Vec2, Node, game, director, macro, Color, Layers, Font, resources, Vec3, Rect, UITransform, UIOpacity, Component, Graphics, misc, Sprite, isValid, Size, screen, view, assetManager, ImageAsset, AudioClip, BufferAsset, AssetManager, Asset, Texture2D, SpriteFrame, BitmapFont, sp, dragonBones, path, Label, LabelOutline, LabelShadow, InstanceMaterialType, SpriteAtlas, RichText, sys, EventMouse, EventTarget, Mask, math, View, AudioSourceComponent, EditBox, Overflow, Pool as Pool$1 } from 'cc';
 import { EDITOR } from 'cc/env';
 
 var ButtonMode;
@@ -12559,6 +12559,7 @@ class GObjectPool {
     }
 }
 
+const SpritePool = new Pool$1(() => new SpriteFrame(), 1);
 class GLoader extends GObject {
     constructor() {
         super();
@@ -12835,7 +12836,7 @@ class GLoader extends GObject {
             if (asset instanceof SpriteFrame)
                 this.onExternalLoadSuccess(asset);
             else if (asset instanceof Texture2D) {
-                let sp = new SpriteFrame();
+                let sp = SpritePool.alloc();
                 sp.texture = asset;
                 assets.push(sp);
                 this.onExternalLoadSuccess(sp);
@@ -12852,7 +12853,7 @@ class GLoader extends GObject {
                     });
                     tex.uploadData(asset.data);
                 }
-                let sp = new SpriteFrame();
+                let sp = SpritePool.alloc();
                 sp.texture = tex;
                 assets.push(tex);
                 assets.push(sp);
@@ -12902,19 +12903,18 @@ class GLoader extends GObject {
             }
             const assets = this._externalAssets[key];
             const asset = assets[0];
-            for (let i = 1; i < assets.length; i++) {
+            for (let i = 0; i < assets.length; i++) {
                 let asset = assets[i];
                 asset.decRef(UIConfig.autoReleaseAssets);
             }
             if (asset.refCount <= 0 && UIConfig.autoReleaseAssets) {
-                assetManager.releaseAsset(asset);
-                if (key.startsWith("http://")
-                    || key.startsWith("https://")
-                    || key.startsWith('/')) ;
-                else {
-                    for (let i = 1; i < assets.length; i++) {
-                        let asset = assets[i];
-                        if (asset.refCount <= 0) {
+                for (let i = 1; i < assets.length; i++) {
+                    let asset = assets[i];
+                    if (asset.refCount <= 0) {
+                        if (asset instanceof SpriteFrame) {
+                            SpritePool.free(asset);
+                        }
+                        else {
                             assetManager.releaseAsset(asset);
                         }
                     }
