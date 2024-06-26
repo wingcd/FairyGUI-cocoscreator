@@ -10,6 +10,7 @@ import { UIPackage } from "./UIPackage";
 import { ByteBuffer } from "./utils/ByteBuffer";
 
 const SpritePool = new Pool<SpriteFrame>(() => new SpriteFrame(), 1);
+const RemoteTextures: Map<string, Texture2D> = new Map();
 
 export class GLoader extends GObject {
     public _content: MovieClip;
@@ -345,6 +346,7 @@ export class GLoader extends GObject {
 
     protected loadExternal(): void {
         let url = this.url;
+        let needAddRef = true;
         let callback = (err: Error | null, asset: Asset) => {
             //因为是异步返回的，而这时可能url已经被改变，所以不能直接用返回的结果
 
@@ -366,15 +368,20 @@ export class GLoader extends GObject {
                 assets.push(sp);
                 this.onExternalLoadSuccess(sp);
             } else if (asset instanceof ImageAsset) {
-                let tex = new Texture2D();
-                if(sys.isNative) {
-                    tex.image = asset;
-                }else{
-                    tex.reset({
-                        width: asset.width,
-                        height: asset.height,
-                    });
-                    tex.uploadData(asset.data);
+                // 从远程加载的纹理，需要缓存起来，避免重复创建纹理
+                let tex = RemoteTextures.get(url);
+                if(!tex) {
+                    if(sys.isNative) {
+                        tex.image = asset;
+                    }else{
+                        tex = new Texture2D();
+                        tex.reset({
+                            width: asset.width,
+                            height: asset.height,
+                        });
+                        tex.uploadData(asset.data);
+                    }
+                    RemoteTextures.set(url, tex);
                 }
                 let sp = SpritePool.alloc();
                 sp.texture = tex;
@@ -382,7 +389,10 @@ export class GLoader extends GObject {
                 assets.push(sp);
                 this.onExternalLoadSuccess(sp);
             }
-            this.addExternalAssetRef(this._url, assets);
+            
+            if(needAddRef && UIConfig.autoReleaseAssets) {
+                this.addExternalAssetRef(this._url, assets);
+            }
         };
         if (this.url.startsWith("http://")
             || this.url.startsWith("https://")
@@ -405,6 +415,9 @@ export class GLoader extends GObject {
                     console.error(`bundle '${pkgName}' not found`);
                     return;
                 }
+
+                // 项目内资源自己管理引用计数，防止其他地方未添加引用计数导致释放
+                needAddRef = false;
             }
             pkg.load(assetUrl, Asset, callback);
         }
@@ -420,6 +433,10 @@ export class GLoader extends GObject {
     }
 
     protected freeExternal(): void {
+        if(this._url?.startsWith("db://")) {
+            return;
+        }
+
         for (const key in this._externalAssets) {
             if (!Object.prototype.hasOwnProperty.call(this._externalAssets, key)) {
                 continue;
@@ -438,6 +455,9 @@ export class GLoader extends GObject {
                     if (asset.refCount <= 0) {
                         if(asset instanceof SpriteFrame) {
                             SpritePool.free(asset);
+                        }else if(asset instanceof Texture2D){
+                            assetManager.releaseAsset(asset);
+                            RemoteTextures.delete(key);
                         }else{
                             assetManager.releaseAsset(asset);
                         }
