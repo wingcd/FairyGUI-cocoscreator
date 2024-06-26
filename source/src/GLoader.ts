@@ -346,6 +346,7 @@ export class GLoader extends GObject {
 
     protected loadExternal(): void {
         let url = this.url;
+        let isRemoteUrl = false;
         let callback = (err: Error | null, asset: Asset) => {
             //因为是异步返回的，而这时可能url已经被改变，所以不能直接用返回的结果
 
@@ -389,7 +390,7 @@ export class GLoader extends GObject {
                 this.onExternalLoadSuccess(sp);
             }
             
-            if(UIConfig.autoReleaseAssets) {
+            if(isRemoteUrl && UIConfig.autoReleaseAssets) {
                 this.addExternalAssetRef(this._url, assets);
             }
         };
@@ -401,6 +402,7 @@ export class GLoader extends GObject {
             } else {
                 assetManager.loadRemote(this.url, callback);
             }
+            isRemoteUrl = true;
         } else {
             let pkg = resources;
             let assetUrl = this.url;
@@ -420,22 +422,15 @@ export class GLoader extends GObject {
     }
 
     private addExternalAssetRef(url: string, assets: Asset[]) {
-        let isDBRes = url?.startsWith("db://");
-
         if (!this._externalAssets[url]) {
             this._externalAssets[url] = assets;
             for (let i = 0; i < assets.length; i++) {
-                if(i == 0 && isDBRes) {
-                    continue;
-                }
                 assets[i].addRef();
             }
         }
     }
 
-    protected freeExternal(): void {        
-        let isDBRes = this._url?.startsWith("db://");
-
+    protected freeExternal(): void {
         for (const key in this._externalAssets) {
             if (!Object.prototype.hasOwnProperty.call(this._externalAssets, key)) {
                 continue;
@@ -445,10 +440,6 @@ export class GLoader extends GObject {
             const asset = assets[0];
             for(let i = 0; i < assets.length; i++) {
                 let asset = assets[i];
-
-                if(i == 0 && isDBRes) {
-                    continue;
-                }
                 asset.decRef(UIConfig.autoReleaseAssets);
             }
 

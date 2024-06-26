@@ -12837,6 +12837,7 @@ class GLoader extends GObject {
     }
     loadExternal() {
         let url = this.url;
+        let isRemoteUrl = false;
         let callback = (err, asset) => {
             //因为是异步返回的，而这时可能url已经被改变，所以不能直接用返回的结果
             if (this.url != url || !isValid(this._node))
@@ -12877,7 +12878,7 @@ class GLoader extends GObject {
                 assets.push(sp);
                 this.onExternalLoadSuccess(sp);
             }
-            if (UIConfig.autoReleaseAssets) {
+            if (isRemoteUrl && UIConfig.autoReleaseAssets) {
                 this.addExternalAssetRef(this._url, assets);
             }
         };
@@ -12890,6 +12891,7 @@ class GLoader extends GObject {
             else {
                 assetManager.loadRemote(this.url, callback);
             }
+            isRemoteUrl = true;
         }
         else {
             let pkg = resources;
@@ -12909,20 +12911,14 @@ class GLoader extends GObject {
         }
     }
     addExternalAssetRef(url, assets) {
-        let isDBRes = url === null || url === void 0 ? void 0 : url.startsWith("db://");
         if (!this._externalAssets[url]) {
             this._externalAssets[url] = assets;
             for (let i = 0; i < assets.length; i++) {
-                if (i == 0 && isDBRes) {
-                    continue;
-                }
                 assets[i].addRef();
             }
         }
     }
     freeExternal() {
-        var _a;
-        let isDBRes = (_a = this._url) === null || _a === void 0 ? void 0 : _a.startsWith("db://");
         for (const key in this._externalAssets) {
             if (!Object.prototype.hasOwnProperty.call(this._externalAssets, key)) {
                 continue;
@@ -12931,9 +12927,6 @@ class GLoader extends GObject {
             const asset = assets[0];
             for (let i = 0; i < assets.length; i++) {
                 let asset = assets[i];
-                if (i == 0 && isDBRes) {
-                    continue;
-                }
                 asset.decRef(UIConfig.autoReleaseAssets);
             }
             if (asset.refCount <= 0 && UIConfig.autoReleaseAssets) {
