@@ -12924,14 +12924,15 @@ class GLoader extends GObject {
                 continue;
             }
             const assets = this._externalAssets[key];
-            const asset = assets[0];
             for (let i = 0; i < assets.length; i++) {
                 let asset = assets[i];
-                asset.decRef(UIConfig.autoReleaseAssets);
-            }
-            if (asset.refCount <= 0 && UIConfig.autoReleaseAssets) {
-                for (let i = 1; i < assets.length; i++) {
-                    let asset = assets[i];
+                if (asset instanceof Sprite) {
+                    asset.decRef(UIConfig.autoReleaseAssets);
+                }
+                else {
+                    asset.decRef(false);
+                }
+                if (UIConfig.autoReleaseAssets) {
                     if (asset.refCount <= 0) {
                         if (asset instanceof SpriteFrame) {
                             SpritePool.free(asset);
