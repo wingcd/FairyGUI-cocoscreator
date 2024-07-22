@@ -12914,11 +12914,11 @@ class GLoader extends GObject {
             const assets = this._externalAssets[key];
             for (let i = 0; i < assets.length; i++) {
                 let asset = assets[i];
-                if (asset instanceof Sprite) {
-                    asset.decRef(UIConfig.autoReleaseAssets);
+                if (asset instanceof SpriteFrame) {
+                    asset.decRef(false);
                 }
                 else {
-                    asset.decRef(false);
+                    asset.decRef(UIConfig.autoReleaseAssets);
                 }
                 if (UIConfig.autoReleaseAssets) {
                     if (asset.refCount <= 0) {
