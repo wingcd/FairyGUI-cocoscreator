@@ -92,7 +92,6 @@ export class PackageItem {
     public addRef(): void {
         this._ref++;
         this.parent?.addRef();
-
         this.asset?.addRef();
         switch (this.type) {
             case PackageItemType.MovieClip:
@@ -112,6 +111,35 @@ export class PackageItem {
         }
     }
 
+    public checkValid() {
+        if(!UIConfig.autoReleaseAssets) {
+            return;
+        }
+
+        if(!this.__loaded || !this.decoded) {
+            return;
+        }
+
+        if(this.type == PackageItemType.Image) {
+            let spriteFrame = this.asset as SpriteFrame;
+            if(spriteFrame.texture && !spriteFrame.texture.isValid) {
+                this.decoded = false;
+                this.__loaded = false;
+            }
+        }else if(this.type == PackageItemType.MovieClip) {
+            if(this.frames) {
+                for (var i: number = 0; i < this.frames.length; i++) {
+                    var frame: Frame = this.frames[i];
+                    if(!frame.texture || !frame.texture.isValid) {    
+                        this.decoded = false;
+                        this.__loaded = false;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     public doRelease(): void {        
         switch (this.type) {
             case PackageItemType.MovieClip:
@@ -119,13 +147,7 @@ export class PackageItem {
                     for (var i: number = 0; i < this.frames.length; i++) {
                         var frame: Frame = this.frames[i];
                         if(frame.texture) {
-                            frame.texture.decRef(true);              
-
-                            if(UIConfig.autoReleaseAssets) {
-                                if(frame.texture.refCount==0) {                                    
-                                    assetManager.releaseAsset(frame.texture);
-                                }
-                            }
+                            frame.texture.decRef(UIConfig.autoReleaseAssets);
                         }
 
                         if(frame.altasPackageItem) {
