@@ -4678,10 +4678,10 @@ class RefMannager {
             for (let i = this._deletes.length - 1; i >= 0; i--) {
                 let item = this._deletes[i];
                 if (item.ref <= 0) {
-                    this._deletes.splice(i, 1);
                     item.doRelease();
                 }
             }
+            this._deletes.length = 0;
         }
     }
 }
@@ -4729,6 +4729,12 @@ class PackageItem {
         (_a = this.parent) === null || _a === void 0 ? void 0 : _a.addRef();
         (_b = this.asset) === null || _b === void 0 ? void 0 : _b.addRef();
         switch (this.type) {
+            case PackageItemType.Image:
+                let asset = this.asset;
+                if (asset.texture) {
+                    asset.texture.addRef();
+                }
+                break;
             case PackageItemType.MovieClip:
                 if (this.frames) {
                     for (var i = 0; i < this.frames.length; i++) {

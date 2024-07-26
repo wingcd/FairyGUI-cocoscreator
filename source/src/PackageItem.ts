@@ -95,6 +95,12 @@ export class PackageItem {
 
         this.asset?.addRef();
         switch (this.type) {
+            case PackageItemType.Image:
+                let asset = this.asset as SpriteFrame;
+                if(asset.texture) {
+                    asset.texture.addRef();
+                }
+                break;
             case PackageItemType.MovieClip:
                 if (this.frames) {
                     for (var i: number = 0; i < this.frames.length; i++) {
