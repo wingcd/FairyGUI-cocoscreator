@@ -276,7 +276,7 @@ export class UIPackage {
         return "ui://" + pkg.id + pi.id;
     }
 
-    public static getItemByURL(url: string): PackageItem {
+    public static getItemByURL(url: string): PackageItem {        
         var pos1: number = url.indexOf("//");
         if (pos1 == -1)
             return null;
@@ -288,7 +288,9 @@ export class UIPackage {
                 var pkg: UIPackage = UIPackage.getById(pkgId);
                 if (pkg != null) {
                     var srcId: string = url.substr(13);
-                    return pkg.getItemById(srcId);
+                    var item = pkg.getItemById(srcId);
+                    item.checkValid();
+                    return item;
                 }
             }
         }
@@ -297,7 +299,9 @@ export class UIPackage {
             pkg = UIPackage.getByName(pkgName);
             if (pkg != null) {
                 var srcName: string = url.substr(pos2 + 1);
-                return pkg.getItemByName(srcName);
+                var item = pkg.getItemByName(srcName);
+                item.checkValid();
+                return item;
             }
         }
 

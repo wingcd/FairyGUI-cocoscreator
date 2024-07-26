@@ -4729,12 +4729,6 @@ class PackageItem {
         (_a = this.parent) === null || _a === void 0 ? void 0 : _a.addRef();
         (_b = this.asset) === null || _b === void 0 ? void 0 : _b.addRef();
         switch (this.type) {
-            case PackageItemType.Image:
-                let asset = this.asset;
-                if (asset.texture) {
-                    asset.texture.addRef();
-                }
-                break;
             case PackageItemType.MovieClip:
                 if (this.frames) {
                     for (var i = 0; i < this.frames.length; i++) {
@@ -4750,6 +4744,33 @@ class PackageItem {
                 break;
         }
     }
+    checkValid() {
+        if (!UIConfig.autoReleaseAssets) {
+            return;
+        }
+        if (!this.__loaded || !this.decoded) {
+            return;
+        }
+        if (this.type == PackageItemType.Image) {
+            let spriteFrame = this.asset;
+            if (spriteFrame.texture && !spriteFrame.texture.isValid) {
+                this.decoded = false;
+                this.__loaded = false;
+            }
+        }
+        else if (this.type == PackageItemType.MovieClip) {
+            if (this.frames) {
+                for (var i = 0; i < this.frames.length; i++) {
+                    var frame = this.frames[i];
+                    if (!frame.texture || !frame.texture.isValid) {
+                        this.decoded = false;
+                        this.__loaded = false;
+                        break;
+                    }
+                }
+            }
+        }
+    }
     doRelease() {
         switch (this.type) {
             case PackageItemType.MovieClip:
@@ -4757,12 +4778,7 @@ class PackageItem {
                     for (var i = 0; i < this.frames.length; i++) {
                         var frame = this.frames[i];
                         if (frame.texture) {
-                            frame.texture.decRef(true);
-                            if (UIConfig.autoReleaseAssets) {
-                                if (frame.texture.refCount == 0) {
-                                    assetManager.releaseAsset(frame.texture);
-                                }
-                            }
+                            frame.texture.decRef(UIConfig.autoReleaseAssets);
                         }
                         if (frame.altasPackageItem) {
                             frame.altasPackageItem.decRef();
@@ -5414,7 +5430,9 @@ class UIPackage {
                 var pkg = UIPackage.getById(pkgId);
                 if (pkg != null) {
                     var srcId = url.substr(13);
-                    return pkg.getItemById(srcId);
+                    var item = pkg.getItemById(srcId);
+                    item.checkValid();
+                    return item;
                 }
             }
         }
@@ -5423,7 +5441,9 @@ class UIPackage {
             pkg = UIPackage.getByName(pkgName);
             if (pkg != null) {
                 var srcName = url.substr(pos2 + 1);
-                return pkg.getItemByName(srcName);
+                var item = pkg.getItemByName(srcName);
+                item.checkValid();
+                return item;
             }
         }
         return null;
