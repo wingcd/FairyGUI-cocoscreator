@@ -6782,7 +6782,12 @@ class GTextField extends GObject {
         }
         else {
             this._label.fontSize = this._fontSize;
-            this._label.lineHeight = this._fontSize + this._leading;
+            if (this._label.textmeshMode) {
+                this._label.lineSpace = this._leading;
+            }
+            else {
+                this._label.lineHeight = this._fontSize + this._leading;
+            }
         }
     }
     updateOverflow() {
