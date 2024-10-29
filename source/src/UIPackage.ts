@@ -289,7 +289,9 @@ export class UIPackage {
                 if (pkg != null) {
                     var srcId: string = url.substr(13);
                     var item = pkg.getItemById(srcId);
-                    item.checkValid();
+                    if(item) {
+                        item.checkValid();
+                    }
                     return item;
                 }
             }
@@ -300,7 +302,9 @@ export class UIPackage {
             if (pkg != null) {
                 var srcName: string = url.substr(pos2 + 1);
                 var item = pkg.getItemByName(srcName);
-                item.checkValid();
+                if(item) {
+                    item.checkValid();
+                }
                 return item;
             }
         }

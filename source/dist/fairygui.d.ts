@@ -1744,6 +1744,7 @@ declare module 'fairygui-cc/PackageItem' {
         getHighResolution(): PackageItem;
         toString(): string;
         addRef(): void;
+        checkValid(): void;
         doRelease(): void;
         decRef(): void;
         dispose(force?: boolean): void;

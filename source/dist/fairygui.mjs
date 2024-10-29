@@ -4678,10 +4678,10 @@ class RefMannager {
             for (let i = this._deletes.length - 1; i >= 0; i--) {
                 let item = this._deletes[i];
                 if (item.ref <= 0) {
-                    this._deletes.splice(i, 1);
                     item.doRelease();
                 }
             }
+            this._deletes.length = 0;
         }
     }
 }
@@ -4744,6 +4744,33 @@ class PackageItem {
                 break;
         }
     }
+    checkValid() {
+        if (!UIConfig.autoReleaseAssets) {
+            return;
+        }
+        if (!this.__loaded || !this.decoded) {
+            return;
+        }
+        if (this.type == PackageItemType.Image) {
+            let spriteFrame = this.asset;
+            if (spriteFrame.texture && !spriteFrame.texture.isValid) {
+                this.decoded = false;
+                this.__loaded = false;
+            }
+        }
+        else if (this.type == PackageItemType.MovieClip) {
+            if (this.frames) {
+                for (var i = 0; i < this.frames.length; i++) {
+                    var frame = this.frames[i];
+                    if (!frame.texture || !frame.texture.isValid) {
+                        this.decoded = false;
+                        this.__loaded = false;
+                        break;
+                    }
+                }
+            }
+        }
+    }
     doRelease() {
         switch (this.type) {
             case PackageItemType.MovieClip:
@@ -4751,12 +4778,7 @@ class PackageItem {
                     for (var i = 0; i < this.frames.length; i++) {
                         var frame = this.frames[i];
                         if (frame.texture) {
-                            frame.texture.decRef(true);
-                            if (UIConfig.autoReleaseAssets) {
-                                if (frame.texture.refCount == 0) {
-                                    assetManager.releaseAsset(frame.texture);
-                                }
-                            }
+                            frame.texture.decRef(UIConfig.autoReleaseAssets);
                         }
                         if (frame.altasPackageItem) {
                             frame.altasPackageItem.decRef();
@@ -5408,7 +5430,11 @@ class UIPackage {
                 var pkg = UIPackage.getById(pkgId);
                 if (pkg != null) {
                     var srcId = url.substr(13);
-                    return pkg.getItemById(srcId);
+                    var item = pkg.getItemById(srcId);
+                    if (item) {
+                        item.checkValid();
+                    }
+                    return item;
                 }
             }
         }
@@ -5417,7 +5443,11 @@ class UIPackage {
             pkg = UIPackage.getByName(pkgName);
             if (pkg != null) {
                 var srcName = url.substr(pos2 + 1);
-                return pkg.getItemByName(srcName);
+                var item = pkg.getItemByName(srcName);
+                if (item) {
+                    item.checkValid();
+                }
+                return item;
             }
         }
         return null;
