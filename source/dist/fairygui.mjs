@@ -5431,7 +5431,9 @@ class UIPackage {
                 if (pkg != null) {
                     var srcId = url.substr(13);
                     var item = pkg.getItemById(srcId);
-                    item.checkValid();
+                    if (item) {
+                        item.checkValid();
+                    }
                     return item;
                 }
             }
@@ -5442,7 +5444,9 @@ class UIPackage {
             if (pkg != null) {
                 var srcName = url.substr(pos2 + 1);
                 var item = pkg.getItemByName(srcName);
-                item.checkValid();
+                if (item) {
+                    item.checkValid();
+                }
                 return item;
             }
         }
