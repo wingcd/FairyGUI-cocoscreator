@@ -238,7 +238,6 @@ export class GLoader extends GObject {
         this.clearContent();
 
         this._content.spriteFrame = value;
-        this._content.type = Sprite.Type.SIMPLE;
         if (value != null) {
             this.sourceWidth = value.getRect().width;
             this.sourceHeight = value.getRect().height;
@@ -247,6 +246,7 @@ export class GLoader extends GObject {
             this.sourceWidth = this.sourceHeight = 0;
         }
 
+        this.updateFillType();
         this.updateLayout();
     }
 
@@ -260,6 +260,23 @@ export class GLoader extends GObject {
             this.loadFromPackage(this._url);
         else
             this.loadExternal();
+    }
+
+    private updateFillType() {
+        if (this._content.fillMethod == 0) {
+            if(this._contentItem) {
+                if (this._contentItem.scale9Grid)
+                this._content.type = Sprite.Type.SLICED;
+                else if (this._contentItem.scaleByTile)
+                    this._content.type = Sprite.Type.TILED;
+                else
+                    this._content.type = Sprite.Type.SIMPLE;
+            }else{
+                this._content.type = Sprite.Type.SIMPLE;
+            }            
+        }else{
+            this._content.type = Sprite.Type.FILLED;
+        }
     }
 
     private init(contentItem: PackageItem, itemURL: string, dirtyVersion: number) {
@@ -279,16 +296,7 @@ export class GLoader extends GObject {
             }
             else {
                 this._content.spriteFrame = <SpriteFrame>this._contentItem.asset;
-                if (this._content.fillMethod == 0) {
-                    if (this._contentItem.scale9Grid)
-                        this._content.type = Sprite.Type.SLICED;
-                    else if (this._contentItem.scaleByTile)
-                        this._content.type = Sprite.Type.TILED;
-                    else
-                        this._content.type = Sprite.Type.SIMPLE;
-                }else{
-                    this._content.type = Sprite.Type.FILLED;
-                }
+                this.updateFillType();
                 this._content.__update();
                 this.updateLayout();
             }
@@ -467,11 +475,11 @@ export class GLoader extends GObject {
 
     protected onExternalLoadSuccess(texture: SpriteFrame): void {
         this._content.spriteFrame = texture;
-        this._content.type = Sprite.Type.SIMPLE;
         this.sourceWidth = texture.getRect().width;
         this.sourceHeight = texture.getRect().height;
         if (this._autoSize)
             this.setSize(this.sourceWidth, this.sourceHeight);
+        this.updateFillType();
         this.updateLayout();
     }
 
