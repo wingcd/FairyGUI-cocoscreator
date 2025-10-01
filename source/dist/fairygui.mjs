@@ -5276,6 +5276,16 @@ class UIPackage {
     static getByName(name) {
         return _instByName[name];
     }
+    static getAllPackages() {
+        var ret = [];
+        for (var pkgId in _instById) {
+            ret.push(_instById[pkgId]);
+        }
+        return ret;
+    }
+    getAllItems() {
+        return this._items;
+    }
     /**
      * 注册一个包。包的所有资源必须放在resources下，且已经预加载。
      * @param path 相对 resources 的路径。
@@ -5467,6 +5477,13 @@ class UIPackage {
     }
     static setStringsSource(source) {
         TranslationHelper.loadFromXML(source);
+        // 需要重置已经加载的包内的字符串
+        for (let pkgId in _instById) {
+            let pkg = _instById[pkgId];
+            for (let item of pkg._items) {
+                item.decoded = false;
+            }
+        }
     }
     loadPackage(buffer, path) {
         if (buffer.readUint() != 0x46475549)

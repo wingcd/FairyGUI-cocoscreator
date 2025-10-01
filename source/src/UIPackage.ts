@@ -64,6 +64,18 @@ export class UIPackage {
         return _instByName[name];
     }
 
+    public static getAllPackages(): Array<UIPackage> {
+        var ret: Array<UIPackage> = [];
+        for (var pkgId in _instById) {
+            ret.push(_instById[pkgId]);
+        }
+        return ret;
+    }
+
+    public getAllItems(): Array<PackageItem> {
+        return this._items;
+    }
+
     /**
      * 注册一个包。包的所有资源必须放在resources下，且已经预加载。
      * @param path 相对 resources 的路径。
@@ -331,6 +343,13 @@ export class UIPackage {
 
     public static setStringsSource(source: string): void {
         TranslationHelper.loadFromXML(source);
+        // 需要重置已经加载的包内的字符串
+        for(let pkgId in _instById) {
+            let pkg = _instById[pkgId];
+            for(let item of pkg._items) {
+                item.decoded = false;
+            }
+        }
     }
 
     private loadPackage(buffer: ByteBuffer, path: string): void {

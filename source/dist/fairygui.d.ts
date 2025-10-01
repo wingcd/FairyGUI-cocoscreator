@@ -1618,6 +1618,8 @@ declare module 'fairygui-cc/UIPackage' {
             static setVar(key: string, value: string | null): void;
             static getById(id: string): UIPackage;
             static getByName(name: string): UIPackage;
+            static getAllPackages(): Array<UIPackage>;
+            getAllItems(): Array<PackageItem>;
             /**
                 * 注册一个包。包的所有资源必须放在resources下，且已经预加载。
                 * @param path 相对 resources 的路径。
