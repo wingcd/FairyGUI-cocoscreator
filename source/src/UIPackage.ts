@@ -343,6 +343,10 @@ export class UIPackage {
 
     public static setStringsSource(source: string): void {
         TranslationHelper.loadFromXML(source);
+        this.clearItemDecodedState();
+    }
+
+    public static clearItemDecodedState() {
         // 需要重置已经加载的包内的字符串
         for(let pkgId in _instById) {
             let pkg = _instById[pkgId];

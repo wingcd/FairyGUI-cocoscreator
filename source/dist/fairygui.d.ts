@@ -1677,6 +1677,7 @@ declare module 'fairygui-cc/UIPackage' {
             static getItemByURL(url: string): PackageItem;
             static normalizeURL(url: string): string;
             static setStringsSource(source: string): void;
+            static clearItemDecodedState(): void;
             dispose(force?: boolean): void;
             get id(): string;
             get name(): string;
